@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  background: #09090b;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  min-height: 100vh;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #e4e4e7;
+  overflow: auto;
+  user-select: none;
+}
+
+#lines {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#canvas {
+  position: relative;
+  min-width: 100vw;
+  min-height: 100vh;
+}
+
+.card {
+  position: absolute;
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 220px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  z-index: 1;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.card.dragging {
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  border-color: #3f3f46;
+  z-index: 100;
+}
+.card.selected {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 1px rgba(167,139,250,.2), 0 4px 24px rgba(0,0,0,.6);
+}
+.card.connected {
+  border-color: #52525b;
+}
+.card.dimmed {
+  opacity: 0.25;
+  transition: opacity 0.15s;
+}
+
+.card-header {
+  padding: 8px 12px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f4f4f5;
+  letter-spacing: 0.01em;
+  cursor: grab;
+}
+
+.card-header:active { cursor: grabbing; }
+
+.card-header-dot {
+  width: 6px; height: 6px;
+  background: #3f3f46;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.col {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-bottom: 1px solid #1c1c1f;
+  font-size: 12px;
+}
+.col:last-child { border-bottom: none; }
+
+.col-name {
+  flex: 1;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  color: #d4d4d8;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.col.pk .col-name { color: #c4b5fd; }
+.col.fk .col-name { color: #fdba74; }
+
+.col-type {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, monospace;
+  flex-shrink: 0;
+}
+.badge-pk { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
+.badge-fk { background: rgba(251,146,60,.10); color: #fb923c;  border: 1px solid rgba(251,146,60,.22); }
+
+.dot-live {
+  position: fixed;
+  bottom: 16px; right: 16px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: #52525b;
+  background: #111113;
+  border: 1px solid #27272a;
+  padding: 3px 8px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 200;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px rgba(34,197,94,.5); }
+  50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 10px rgba(34,197,94,.8); }
+  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px rgba(34,197,94,.5); }
+}
+.dot-live::before {
+  content: '';
+  width: 5px; height: 5px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(34,197,94,.5);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.empty {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #3f3f46;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+<svg id="lines"></svg>
+<div id="canvas"></div>
+<div class="dot-live">live schema</div>
+
+<script>
+const DATA = {{ .JSON }};
+
+const PAD  = 48;
+const COLW = 248;
+const ROWH = 260;
+
+let selected = null;
+
+function cid(table, col) {
+  return 'c_' + (table + '__' + col).replace(/\W/g, '_');
+}
+
+function absRect(el) {
+  const r = el.getBoundingClientRect();
+  return { top: r.top + scrollY, left: r.left + scrollX, right: r.right + scrollX, bottom: r.bottom + scrollY, w: r.width, h: r.height };
+}
+
+function resizeSVG() {
+  const cards = document.querySelectorAll('.card');
+  let maxR = 0, maxB = 0;
+  cards.forEach(c => {
+    maxR = Math.max(maxR, c.offsetLeft + c.offsetWidth);
+    maxB = Math.max(maxB, c.offsetTop  + c.offsetHeight);
+  });
+  const svg = document.getElementById('lines');
+  svg.setAttribute('width',  Math.max(maxR + PAD, window.innerWidth));
+  svg.setAttribute('height', Math.max(maxB + PAD, window.innerHeight));
+}
+
+function drawLines() {
+  resizeSVG();
+  const svg = document.getElementById('lines');
+  svg.innerHTML = '';
+
+  (DATA.relations || []).forEach(rel => {
+    const srcEl = document.getElementById(cid(rel.src,  rel.srcCol));
+    const tgtEl = document.getElementById(cid(rel.tgt, rel.tgtCol));
+    if (!srcEl || !tgtEl) return;
+
+    const sr = absRect(srcEl);
+    const tr = absRect(tgtEl);
+    const sc = absRect(srcEl.closest('.card'));
+    const tc = absRect(tgtEl.closest('.card'));
+
+    const y1 = sr.top + sr.h / 2;
+    const y2 = tr.top + tr.h / 2;
+    let x1, x2, s;
+
+    if (sc.left <= tc.left) { x1 = sc.right; x2 = tc.left;  s =  1; }
+    else                     { x1 = sc.left;  x2 = tc.right; s = -1; }
+
+    const isSource = selected === rel.src;
+    const isTarget = selected === rel.tgt;
+    const lit      = isSource || isTarget;
+    const faded    = selected && !lit;
+
+    const stroke = faded ? '#27272a' : lit ? (isSource ? '#fb923c' : '#a78bfa') : '#3f3f46';
+    const sw     = lit ? '2' : '1.5';
+    const cp     = Math.max(48, Math.abs(x2 - x1) * 0.42);
+    const d      = `M ${x1} ${y1} C ${x1+s*cp} ${y1} ${x2-s*cp} ${y2} ${x2} ${y2}`;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', stroke);
+    path.setAttribute('stroke-width', sw);
+    path.setAttribute('fill', 'none');
+    svg.appendChild(path);
+
+    const dotColor = faded ? '#27272a' : lit ? stroke : '#52525b';
+    [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+      c.setAttribute('r', '2.5'); c.setAttribute('fill', dotColor);
+      svg.appendChild(c);
+    });
+  });
+}
+
+function updateHighlight() {
+  if (!selected) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected', 'connected', 'dimmed'));
+    return;
+  }
+  const connected = new Set();
+  (DATA.relations || []).forEach(rel => {
+    if (rel.src === selected) connected.add(rel.tgt);
+    if (rel.tgt === selected) connected.add(rel.src);
+  });
+  document.querySelectorAll('.card').forEach(c => {
+    const n = c.dataset.table;
+    c.classList.toggle('selected',   n === selected);
+    c.classList.toggle('connected',  n !== selected && connected.has(n));
+    c.classList.toggle('dimmed',     n !== selected && !connected.has(n));
+  });
+}
+
+function select(name) {
+  selected = selected === name ? null : name;
+  updateHighlight();
+  requestAnimationFrame(drawLines);
+}
+
+function makeDraggable(card, hdr) {
+  let ox = 0, oy = 0, startX = 0, startY = 0, dragged = false;
+
+  hdr.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const rect = card.getBoundingClientRect();
+    ox = e.clientX - rect.left;
+    oy = e.clientY - rect.top;
+    startX = e.clientX; startY = e.clientY;
+    dragged = false;
+    card.classList.add('dragging');
+    hdr.setPointerCapture(e.pointerId);
+  });
+
+  hdr.addEventListener('pointermove', e => {
+    if (!hdr.hasPointerCapture(e.pointerId)) return;
+    if (Math.abs(e.clientX - startX) > 4 || Math.abs(e.clientY - startY) > 4) dragged = true;
+    card.style.left = Math.max(0, e.clientX + scrollX - ox) + 'px';
+    card.style.top  = Math.max(0, e.clientY + scrollY - oy) + 'px';
+    requestAnimationFrame(drawLines);
+  });
+
+  hdr.addEventListener('pointerup', () => {
+    card.classList.remove('dragging');
+    if (!dragged) {
+      select(card.dataset.table);
+    } else {
+      localStorage.setItem('watcher_pos_' + card.dataset.table, JSON.stringify({
+        left: card.style.left,
+        top: card.style.top
+      }));
+    }
+  });
+}
+
+function render() {
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = '';
+  document.querySelectorAll('.empty').forEach(el => el.remove());
+
+  if (!DATA.tables || DATA.tables.length === 0) {
+    const el = document.createElement('div');
+    el.className = 'empty';
+    el.textContent = 'no tables found';
+    document.body.appendChild(el);
+    requestAnimationFrame(drawLines);
+    return;
+  }
+
+  const cols = Math.ceil(Math.sqrt(DATA.tables.length * 1.4));
+
+  DATA.tables.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.table = t.name;
+
+    const saved = localStorage.getItem('watcher_pos_' + t.name);
+    if (saved) {
+      try {
+        const pos = JSON.parse(saved);
+        card.style.left = pos.left;
+        card.style.top  = pos.top;
+      } catch (e) {
+        card.style.left = (PAD + (i % cols) * COLW) + 'px';
+        card.style.top  = (PAD + Math.floor(i / cols) * ROWH) + 'px';
+      }
+    } else {
+      card.style.left = (PAD + (i % cols) * COLW) + 'px';
+      card.style.top  = (PAD + Math.floor(i / cols) * ROWH) + 'px';
+    }
+
+    const hdr = document.createElement('div');
+    hdr.className = 'card-header';
+    const dot = document.createElement('span');
+    dot.className = 'card-header-dot';
+    hdr.appendChild(dot);
+    hdr.appendChild(document.createTextNode(t.name));
+    card.appendChild(hdr);
+
+    (t.cols || []).forEach(col => {
+      const row = document.createElement('div');
+      row.className = 'col' + (col.pk ? ' pk' : col.fk ? ' fk' : '');
+      row.id = cid(t.name, col.name);
+
+      if (col.pk || col.fk) {
+        const b = document.createElement('span');
+        b.className = 'badge ' + (col.pk ? 'badge-pk' : 'badge-fk');
+        b.textContent = col.pk ? 'PK' : 'FK';
+        row.appendChild(b);
+      }
+
+      const nm = document.createElement('span'); nm.className = 'col-name'; nm.textContent = col.name;
+      const tp = document.createElement('span'); tp.className = 'col-type'; tp.textContent = col.type;
+      row.appendChild(nm);
+      row.appendChild(tp);
+      card.appendChild(row);
+    });
+
+    makeDraggable(card, hdr);
+    canvas.appendChild(card);
+  });
+
+  requestAnimationFrame(drawLines);
+}
+
+render();
+window.addEventListener('resize', () => requestAnimationFrame(drawLines));
+document.getElementById('canvas').addEventListener('pointerdown', e => {
+  if (e.target === document.getElementById('canvas')) {
+    selected = null;
+    updateHighlight();
+    requestAnimationFrame(drawLines);
+  }
+});
+
+// Auto-monitoring system
+let activeDataHash = JSON.stringify(DATA);
+
+async function checkUpdates() {
+  try {
+    const res = await fetch(window.location.pathname + '?format=json', {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) return;
+    const json = await res.json();
+    const newHash = JSON.stringify(json);
+    if (newHash !== activeDataHash) {
+      DATA.tables = json.tables || [];
+      DATA.relations = json.relations || [];
+      activeDataHash = newHash;
+
+      if (selected && !DATA.tables.some(t => t.name === selected)) {
+        selected = null;
+      }
+
+      render();
+      updateHighlight();
+    }
+  } catch (e) {
+    console.error('Error auto-updating schema:', e);
+  }
+}
+
+// Check every 1.5 seconds
+setInterval(checkUpdates, 1500);
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# DB Watcher
+
+DB Watcher is a lightweight, zero-dependency schema introspection library for Go. It allows developers to mount an interactive database schema inspector dashboard directly onto their web application.
+
+## Key APIs
+
+### schema.NewInspector
+
+Instantiates a database inspector by inspecting the type of the `*sql.DB` driver.
+Signature: `func NewInspector(db *sql.DB) (Inspector, error)`
+
+Supported Drivers:
+- `*sqlite3.SQLiteDriver` (CGO sqlite3)
+- `*sqlite.Driver` (`modernc.org/sqlite` pure Go sqlite)
+- `*pq.Driver` (`github.com/lib/pq` postgres)
+- `*stdlib.Driver` (`github.com/jackc/pgx/v5` stdlib postgres)
+- `*mysql.MySQLDriver` (`github.com/go-sql-driver/mysql` mysql/mariadb)
+
+### schema.HTTPHandler
+
+Returns an `http.HandlerFunc` that handles browser dashboard requests (HTML) and machine schema requests (JSON).
+Signature: `func HTTPHandler(inspector Inspector) http.HandlerFunc`
+
+- **Dashboard HTML view**: Standard web request.
+- **JSON raw schema view**: Query parameter `?format=json` or `Accept: application/json` header.
+
+## Web Dashboard Features
+
+- **Live Schema Updates**: Polls `?format=json` every 1.5 seconds and updates the schema live in the browser without reloading.
+- **Persistent Coordinates**: Dragged table positions are saved in `localStorage` as `watcher_pos_<tableName>`. Re-rendering preserves drag locations.
+- **Relationship Highlighting**: Interactive relationship lines trace foreign key connections. Table header clicks highlight associated tables.
+
+## Testing
+
+Integration tests use Testcontainers for Go to run tests against real databases (Postgres and MySQL).
+
+- Run unit tests: `go test ./...`
+- Run integration tests: `go test -tags=integration -v ./pkg/schema/...`
