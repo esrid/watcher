@@ -5,6 +5,7 @@ package watcher
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -40,9 +41,14 @@ type Inspector interface {
 //   - PostgreSQL: "*pq.Driver" (github.com/lib/pq) and "*stdlib.Driver" (github.com/jackc/pgx)
 //   - MySQL / MariaDB: "*mysql.MySQLDriver" (github.com/go-sql-driver/mysql)
 //
+// Instrumented wrappers such as otelsql are also supported: NewInspector first
+// attempts to unwrap the driver via the Unwrap() driver.Driver interface, and
+// if that is not available it falls back to dialect probing (one lightweight
+// query per candidate dialect).
+//
 // Returns an error if the database driver is unsupported.
 func NewInspector(db *sql.DB) (Inspector, error) {
-	driverType := fmt.Sprintf("%T", db.Driver())
+	driverType := fmt.Sprintf("%T", unwrapDriver(db.Driver()))
 	switch driverType {
 	case "*sqlite3.SQLiteDriver", "*sqlite.Driver":
 		return sqlite.New(db), nil
@@ -51,8 +57,46 @@ func NewInspector(db *sql.DB) (Inspector, error) {
 	case "*mysql.MySQLDriver":
 		return mysql.New(db), nil
 	default:
-		return nil, fmt.Errorf("unsupported driver: %s", driverType)
+		// Opaque wrapper (e.g. otelsql whose inner driver field is unexported):
+		// probe the dialect by running a driver-specific no-op query.
+		return probeDialect(db, driverType)
 	}
+}
+
+// unwrapDriver recursively unwraps instrumented/middleware drivers that expose
+// their inner driver via the Unwrap() driver.Driver method.
+func unwrapDriver(d driver.Driver) driver.Driver {
+	type unwrapper interface {
+		Unwrap() driver.Driver
+	}
+	for {
+		u, ok := d.(unwrapper)
+		if !ok {
+			return d
+		}
+		inner := u.Unwrap()
+		if inner == d {
+			return d
+		}
+		d = inner
+	}
+}
+
+// probeDialect detects the SQL dialect by running a driver-specific query.
+// Used as fallback when the driver type cannot be resolved via unwrapping.
+func probeDialect(db *sql.DB, driverType string) (Inspector, error) {
+	ctx := context.Background()
+	var v string
+	if err := db.QueryRowContext(ctx, "SELECT sqlite_version()").Scan(&v); err == nil {
+		return sqlite.New(db), nil
+	}
+	if err := db.QueryRowContext(ctx, "SELECT pg_catalog.version()").Scan(&v); err == nil {
+		return postgres.New(db), nil
+	}
+	if err := db.QueryRowContext(ctx, "SELECT @@version_comment").Scan(&v); err == nil {
+		return mysql.New(db), nil
+	}
+	return nil, fmt.Errorf("unsupported driver: %s", driverType)
 }
 
 func InspectDatabase(ctx context.Context, inspector Inspector) error {
