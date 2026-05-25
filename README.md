@@ -38,7 +38,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/esrid/watcher/pkg/schema"
+	"github.com/esrid/watcher"
 
 	_ "github.com/mattn/go-sqlite3" // or pure-Go _ "modernc.org/sqlite"
 )
@@ -52,14 +52,14 @@ func main() {
 	defer db.Close()
 
 	// 1. Initialize the schema inspector
-	inspector, err := schema.NewInspector(db)
+	inspector, err := watcher.NewInspector(db)
 	if err != nil {
 		panic(err)
 	}
 
 	// 2. Register the debug dashboard route
 	// You can mount this at any custom endpoint (e.g., behind auth middlewares)
-	http.HandleFunc("/_debug/schema", schema.HTTPHandler(inspector))
+	http.HandleFunc("/_debug/schema", watcher.HTTPHandler(inspector))
 
 	// Your business routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +75,7 @@ func main() {
 
 ## 🛠️ API Reference
 
-### `schema.NewInspector`
+### `watcher.NewInspector`
 
 ```go
 func NewInspector(db *sql.DB) (Inspector, error)
@@ -87,7 +87,7 @@ Detects the underlying database driver type and returns a concrete `Inspector` i
 - `*stdlib.Driver` (`github.com/jackc/pgx` PostgreSQL stdlib)
 - `*mysql.MySQLDriver` (`github.com/go-sql-driver/mysql` MySQL / MariaDB)
 
-### `schema.HTTPHandler`
+### `watcher.HTTPHandler`
 
 ```go
 func HTTPHandler(inspector Inspector) http.HandlerFunc
@@ -131,7 +131,7 @@ go test ./...
 ### Run Real-Database Integration Tests
 *(Requires Docker to be running locally)*
 ```bash
-go test -tags=integration -v ./pkg/schema/...
+go test -tags=integration -v ./...
 ```
 
 ---

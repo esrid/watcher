@@ -1,6 +1,6 @@
 //go:build integration
 
-package schema_test
+package watcher_test
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/esrid/watcher/pkg/schema"
+	"github.com/esrid/watcher"
 )
 
 // ── column parsing ────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ func pkNames(cols []col) []string {
 type PostgresSuite struct {
 	suite.Suite
 	db   *sql.DB
-	insp schema.Inspector
+	insp watcher.Inspector
 }
 
 // SetupSuite starts the container once for the whole suite.
@@ -89,7 +89,7 @@ func (s *PostgresSuite) SetupSuite() {
 	s.T().Cleanup(func() { s.db.Close() })
 	s.Require().NoError(s.db.PingContext(ctx), "ping postgres")
 
-	insp, err := schema.NewInspector(s.db)
+	insp, err := watcher.NewInspector(s.db)
 	s.Require().NoError(err, "NewInspector")
 	s.insp = insp
 }
@@ -241,7 +241,7 @@ func TestPostgresSuite(t *testing.T) {
 type MySQLSuite struct {
 	suite.Suite
 	db   *sql.DB
-	insp schema.Inspector
+	insp watcher.Inspector
 }
 
 func (s *MySQLSuite) SetupSuite() {
@@ -264,7 +264,7 @@ func (s *MySQLSuite) SetupSuite() {
 	s.T().Cleanup(func() { s.db.Close() })
 	s.Require().NoError(s.db.PingContext(ctx), "ping mysql")
 
-	insp, err := schema.NewInspector(s.db)
+	insp, err := watcher.NewInspector(s.db)
 	s.Require().NoError(err, "NewInspector")
 	s.insp = insp
 }
@@ -459,7 +459,7 @@ func TestNewInspector_DispatchPostgres(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 
-	insp, err := schema.NewInspector(db)
+	insp, err := watcher.NewInspector(db)
 	require.NoError(t, err)
 	require.NotNil(t, insp)
 }
@@ -480,7 +480,7 @@ func TestNewInspector_DispatchMySQL(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 
-	insp, err := schema.NewInspector(db)
+	insp, err := watcher.NewInspector(db)
 	require.NoError(t, err)
 	require.NotNil(t, insp)
 }

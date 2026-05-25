@@ -4,7 +4,7 @@ DB Watcher is a lightweight, zero-dependency schema introspection library for Go
 
 ## Key APIs
 
-### schema.NewInspector
+### watcher.NewInspector
 
 Instantiates a database inspector by inspecting the type of the `*sql.DB` driver.
 Signature: `func NewInspector(db *sql.DB) (Inspector, error)`
@@ -16,7 +16,7 @@ Supported Drivers:
 - `*stdlib.Driver` (`github.com/jackc/pgx/v5` stdlib postgres)
 - `*mysql.MySQLDriver` (`github.com/go-sql-driver/mysql` mysql/mariadb)
 
-### schema.HTTPHandler
+### watcher.HTTPHandler
 
 Returns an `http.HandlerFunc` that handles browser dashboard requests (HTML) and machine schema requests (JSON).
 Signature: `func HTTPHandler(inspector Inspector) http.HandlerFunc`
@@ -35,4 +35,4 @@ Signature: `func HTTPHandler(inspector Inspector) http.HandlerFunc`
 Integration tests use Testcontainers for Go to run tests against real databases (Postgres and MySQL).
 
 - Run unit tests: `go test ./...`
-- Run integration tests: `go test -tags=integration -v ./pkg/schema/...`
+- Run integration tests: `go test -tags=integration -v ./...`

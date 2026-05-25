@@ -1,6 +1,6 @@
-// Package schema provides real-time, interactive database schema introspection
+// Package watcher provides real-time, interactive database schema introspection
 // and visualization for SQLite, PostgreSQL, and MySQL databases.
-package schema
+package watcher
 
 import (
 	"context"
