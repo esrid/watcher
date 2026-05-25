@@ -30,6 +30,8 @@ body {
   position: relative;
   min-width: 100vw;
   min-height: 100vh;
+  transform-origin: 0 0;
+  transition: transform 0.15s ease;
 }
 
 .card {
@@ -162,12 +164,51 @@ body {
   font-family: ui-monospace, monospace;
   font-size: 13px;
 }
+
+.zoom-controls {
+  position: fixed;
+  bottom: 16px; left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 200;
+}
+.zoom-btn {
+  width: 28px; height: 28px;
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-size: 14px;
+  font-family: ui-monospace, monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.zoom-btn:hover { background: #18181b; border-color: #3f3f46; color: #e4e4e7; }
+.zoom-btn:active { background: #27272a; }
+.zoom-level {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: #52525b;
+  min-width: 38px;
+  text-align: center;
+  user-select: none;
+}
 </style>
 </head>
 <body>
 <svg id="lines"></svg>
 <div id="canvas"></div>
 <div class="dot-live">live schema</div>
+<div class="zoom-controls">
+  <button class="zoom-btn" id="zoom-out" title="Zoom out (Ctrl + -)">&minus;</button>
+  <span class="zoom-level" id="zoom-level">100%</span>
+  <button class="zoom-btn" id="zoom-in" title="Zoom in (Ctrl + +)">+</button>
+  <button class="zoom-btn" id="zoom-reset" title="Reset zoom (Ctrl + 0)" style="font-size:10px;width:auto;padding:0 6px;">⟲</button>
+</div>
 
 <script>
 const DATA = {{ .JSON }};
@@ -175,6 +216,11 @@ const DATA = {{ .JSON }};
 const PAD  = 48;
 const COLW = 248;
 const ROWH = 260;
+
+let zoomLevel = 1;
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 2;
+const ZOOM_STEP = 0.1;
 
 let selected = null;
 
@@ -184,7 +230,10 @@ function cid(table, col) {
 
 function absRect(el) {
   const r = el.getBoundingClientRect();
-  return { top: r.top + scrollY, left: r.left + scrollX, right: r.right + scrollX, bottom: r.bottom + scrollY, w: r.width, h: r.height };
+  // Account for zoom transform on canvas
+  const top  = (r.top  + scrollY) / zoomLevel;
+  const left = (r.left + scrollX) / zoomLevel;
+  return { top, left, right: left + r.width / zoomLevel, bottom: top + r.height / zoomLevel, w: r.width / zoomLevel, h: r.height / zoomLevel };
 }
 
 function resizeSVG() {
@@ -289,8 +338,8 @@ function makeDraggable(card, hdr) {
   hdr.addEventListener('pointermove', e => {
     if (!hdr.hasPointerCapture(e.pointerId)) return;
     if (Math.abs(e.clientX - startX) > 4 || Math.abs(e.clientY - startY) > 4) dragged = true;
-    card.style.left = Math.max(0, e.clientX + scrollX - ox) + 'px';
-    card.style.top  = Math.max(0, e.clientY + scrollY - oy) + 'px';
+    card.style.left = Math.max(0, (e.clientX + scrollX - ox) / zoomLevel) + 'px';
+    card.style.top  = Math.max(0, (e.clientY + scrollY - oy) / zoomLevel) + 'px';
     requestAnimationFrame(drawLines);
   });
 
@@ -385,6 +434,39 @@ document.getElementById('canvas').addEventListener('pointerdown', e => {
     updateHighlight();
     requestAnimationFrame(drawLines);
   }
+});
+
+// ── Zoom ────────────────────────────────────────────────
+function setZoom(level) {
+  zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(level * 100) / 100));
+  const canvas = document.getElementById('canvas');
+  const svg    = document.getElementById('lines');
+  canvas.style.transform = `scale(${zoomLevel})`;
+  svg.style.transform    = `scale(${zoomLevel})`;
+  svg.style.transformOrigin = '0 0';
+  document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+  requestAnimationFrame(drawLines);
+}
+
+document.getElementById('zoom-in').addEventListener('click',  () => setZoom(zoomLevel + ZOOM_STEP));
+document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoomLevel - ZOOM_STEP));
+document.getElementById('zoom-reset').addEventListener('click', () => setZoom(1));
+
+// Ctrl + scroll wheel zoom
+window.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    setZoom(zoomLevel + delta);
+  }
+}, { passive: false });
+
+// Keyboard shortcuts: Ctrl += (zoom in), Ctrl+- (zoom out), Ctrl+0 (reset)
+window.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  if (e.key === '=' || e.key === '+') { e.preventDefault(); setZoom(zoomLevel + ZOOM_STEP); }
+  if (e.key === '-')                  { e.preventDefault(); setZoom(zoomLevel - ZOOM_STEP); }
+  if (e.key === '0')                  { e.preventDefault(); setZoom(1); }
 });
 
 // Auto-monitoring system

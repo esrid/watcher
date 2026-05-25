@@ -6,6 +6,14 @@
 
 **DB Watcher** is a lightweight, zero-dependency schema introspection library for Go. It allows developers to mount a beautiful, real-time database schema inspector dashboard directly onto their existing web application in seconds.
 
+<p align="center">
+  <img src="dashboard.png" alt="DB Watcher Dashboard" width="720" />
+</p>
+
+<p align="center">
+  <img src="dashboard-highlight.png" alt="DB Watcher Relationship Highlighting" width="720" />
+</p>
+
 ---
 
 ## ✨ Features
