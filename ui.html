@@ -4,17 +4,54 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Schema</title>
+<script>
+(function(){
+  var t = localStorage.getItem('watcher_theme');
+  if (t === 'light' || t === 'dark') document.documentElement.style.colorScheme = t;
+})();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
+:root {
+  color-scheme: dark light;
+  --bg:           light-dark(#fafafa,      #09090b);
+  --bg-dot:       light-dark(rgba(0,0,0,.05), rgba(255,255,255,.04));
+  --text:         light-dark(#18181b,      #e4e4e7);
+  --card-bg:      light-dark(#ffffff,      #111113);
+  --card-border:  light-dark(#e4e4e7,      #27272a);
+  --card-drag-border: light-dark(#d4d4d8,  #3f3f46);
+  --card-conn-border: light-dark(#a1a1aa,  #52525b);
+  --header-bg:    light-dark(#f4f4f5,      #18181b);
+  --header-text:  light-dark(#09090b,      #f4f4f5);
+  --header-dot:   light-dark(#d4d4d8,      #3f3f46);
+  --col-border:   light-dark(#f0f0f0,      #1c1c1f);
+  --col-name:     light-dark(#3f3f46,      #d4d4d8);
+  --col-type:     light-dark(#a1a1aa,      #52525b);
+  --muted:        light-dark(#a1a1aa,      #3f3f46);
+  --ui-bg:        light-dark(#ffffff,      #111113);
+  --ui-border:    light-dark(#e4e4e7,      #27272a);
+  --ui-text:      light-dark(#71717a,      #a1a1aa);
+  --ui-hover-bg:  light-dark(#f4f4f5,      #18181b);
+  --ui-hover-bdr: light-dark(#d4d4d8,      #3f3f46);
+  --ui-hover-txt: light-dark(#18181b,      #e4e4e7);
+  --ui-active-bg: light-dark(#e4e4e7,      #27272a);
+  --line-dim:     light-dark(#d4d4d8,      #27272a);
+  --line-def:     light-dark(#a1a1aa,      #3f3f46);
+  --dot-def:      light-dark(#c4c4c8,      #52525b);
+  --shadow-card:  light-dark(rgba(0,0,0,.08), rgba(0,0,0,.5));
+  --shadow-drag:  light-dark(rgba(0,0,0,.18), rgba(0,0,0,.8));
+  --shadow-sel:   light-dark(rgba(0,0,0,.12), rgba(0,0,0,.6));
+}
+
 body {
-  background: #09090b;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background: var(--bg);
+  background-image: radial-gradient(circle, var(--bg-dot) 1px, transparent 1px);
   background-size: 24px 24px;
   min-height: 100vh;
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  color: #e4e4e7;
+  color: var(--text);
   overflow: auto;
   user-select: none;
 }
@@ -36,27 +73,27 @@ body {
 
 .card {
   position: absolute;
-  background: #111113;
-  border: 1px solid #27272a;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 8px;
   overflow: hidden;
   width: 220px;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 20px var(--shadow-card);
   z-index: 1;
   transition: box-shadow 0.15s, border-color 0.15s;
 }
 
 .card.dragging {
-  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
-  border-color: #3f3f46;
+  box-shadow: 0 8px 40px var(--shadow-drag);
+  border-color: var(--card-drag-border);
   z-index: 100;
 }
 .card.selected {
   border-color: #a78bfa;
-  box-shadow: 0 0 0 1px rgba(167,139,250,.2), 0 4px 24px rgba(0,0,0,.6);
+  box-shadow: 0 0 0 1px rgba(167,139,250,.2), 0 4px 24px var(--shadow-sel);
 }
 .card.connected {
-  border-color: #52525b;
+  border-color: var(--card-conn-border);
 }
 .card.dimmed {
   opacity: 0.25;
@@ -65,15 +102,15 @@ body {
 
 .card-header {
   padding: 8px 12px;
-  background: #18181b;
-  border-bottom: 1px solid #27272a;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--card-border);
   display: flex;
   align-items: center;
   gap: 7px;
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #f4f4f5;
+  color: var(--header-text);
   letter-spacing: 0.01em;
   cursor: grab;
 }
@@ -82,7 +119,7 @@ body {
 
 .card-header-dot {
   width: 6px; height: 6px;
-  background: #3f3f46;
+  background: var(--header-dot);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -92,7 +129,7 @@ body {
   align-items: center;
   gap: 7px;
   padding: 5px 12px;
-  border-bottom: 1px solid #1c1c1f;
+  border-bottom: 1px solid var(--col-border);
   font-size: 12px;
 }
 .col:last-child { border-bottom: none; }
@@ -100,7 +137,7 @@ body {
 .col-name {
   flex: 1;
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-  color: #d4d4d8;
+  color: var(--col-name);
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -112,7 +149,7 @@ body {
 .col-type {
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
-  color: #52525b;
+  color: var(--col-type);
   white-space: nowrap;
 }
 
@@ -133,9 +170,9 @@ body {
   bottom: 16px; right: 16px;
   font-size: 10px;
   font-family: ui-monospace, monospace;
-  color: #52525b;
-  background: #111113;
-  border: 1px solid #27272a;
+  color: var(--ui-text);
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-border);
   padding: 3px 8px;
   border-radius: 99px;
   display: flex;
@@ -160,7 +197,7 @@ body {
 .empty {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  color: #3f3f46;
+  color: var(--muted);
   font-family: ui-monospace, monospace;
   font-size: 13px;
 }
@@ -175,10 +212,10 @@ body {
 }
 .zoom-btn {
   width: 28px; height: 28px;
-  background: #111113;
-  border: 1px solid #27272a;
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-border);
   border-radius: 6px;
-  color: #a1a1aa;
+  color: var(--ui-text);
   font-size: 14px;
   font-family: ui-monospace, monospace;
   cursor: pointer;
@@ -187,22 +224,42 @@ body {
   justify-content: center;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.zoom-btn:hover { background: #18181b; border-color: #3f3f46; color: #e4e4e7; }
-.zoom-btn:active { background: #27272a; }
+.zoom-btn:hover { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
+.zoom-btn:active { background: var(--ui-active-bg); }
 .zoom-level {
   font-size: 10px;
   font-family: ui-monospace, monospace;
-  color: #52525b;
+  color: var(--col-type);
   min-width: 38px;
   text-align: center;
   user-select: none;
 }
+
+.theme-btn {
+  position: fixed;
+  top: 12px; right: 12px;
+  width: 28px; height: 28px;
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  color: var(--ui-text);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.theme-btn:hover { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
+.theme-btn:active { background: var(--ui-active-bg); }
 </style>
 </head>
 <body>
 <svg id="lines"></svg>
 <div id="canvas"></div>
 <div class="dot-live">live schema</div>
+<button class="theme-btn" id="theme-toggle" title="Toggle light/dark mode">◑</button>
 <div class="zoom-controls">
   <button class="zoom-btn" id="zoom-out" title="Zoom out (Ctrl + -)">&minus;</button>
   <span class="zoom-level" id="zoom-level">100%</span>
@@ -275,7 +332,12 @@ function drawLines() {
     const lit      = isSource || isTarget;
     const faded    = selected && !lit;
 
-    const stroke = faded ? '#27272a' : lit ? (isSource ? '#fb923c' : '#a78bfa') : '#3f3f46';
+    const cs       = getComputedStyle(document.documentElement);
+    const lineDim  = cs.getPropertyValue('--line-dim').trim();
+    const lineDef  = cs.getPropertyValue('--line-def').trim();
+    const dotDef   = cs.getPropertyValue('--dot-def').trim();
+
+    const stroke = faded ? lineDim : lit ? (isSource ? '#fb923c' : '#a78bfa') : lineDef;
     const sw     = lit ? '2' : '1.5';
     const cp     = Math.max(48, Math.abs(x2 - x1) * 0.42);
     const d      = `M ${x1} ${y1} C ${x1+s*cp} ${y1} ${x2-s*cp} ${y2} ${x2} ${y2}`;
@@ -287,7 +349,7 @@ function drawLines() {
     path.setAttribute('fill', 'none');
     svg.appendChild(path);
 
-    const dotColor = faded ? '#27272a' : lit ? stroke : '#52525b';
+    const dotColor = faded ? lineDim : lit ? stroke : dotDef;
     [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
       const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       c.setAttribute('cx', cx); c.setAttribute('cy', cy);
@@ -499,6 +561,15 @@ async function checkUpdates() {
 
 // Check every 1.5 seconds
 setInterval(checkUpdates, 1500);
+
+// ── Theme toggle ─────────────────────────────────────────
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const cur  = document.documentElement.style.colorScheme;
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.style.colorScheme = next;
+  localStorage.setItem('watcher_theme', next);
+  requestAnimationFrame(drawLines);
+});
 </script>
 </body>
 </html>

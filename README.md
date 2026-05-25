@@ -6,13 +6,20 @@
 
 **DB Watcher** is a lightweight, zero-dependency schema introspection library for Go. It allows developers to mount a beautiful, real-time database schema inspector dashboard directly onto their existing web application in seconds.
 
-<p align="center">
-  <img src="dashboard.png" alt="DB Watcher Dashboard" width="720" />
-</p>
-
-<p align="center">
-  <img src="dashboard-highlight.png" alt="DB Watcher Relationship Highlighting" width="720" />
-</p>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="dashboard.png" alt="Dashboard" width="280" /></td>
+      <td align="center"><img src="dashboard-highlight.png" alt="Relationship Highlighting" width="280" /></td>
+      <td align="center"><img src="ui-light-dark.png" alt="Light & Dark Mode" width="280" /></td>
+    </tr>
+    <tr>
+      <td align="center"><sub>Dashboard</sub></td>
+      <td align="center"><sub>Relationship Highlighting</sub></td>
+      <td align="center"><sub>Light &amp; Dark Mode</sub></td>
+    </tr>
+  </table>
+</div>
 
 ---
 
@@ -22,6 +29,7 @@
 * **Real-time Schema Monitoring**: The web dashboard automatically polls the backend and updates the schema layout in real-time when tables, columns, or foreign keys change, with **zero page refreshes**.
 * **Persistent Layout Customization**: Drag-and-drop tables anywhere to organize your ERD layout. Dragged positions are preserved across updates and page reloads via `localStorage`.
 * **Interactive Relationship Mapping**: Click on any table header to instantly highlight its incoming and outgoing foreign key relationships.
+* **Light & Dark Mode**: Built-in theme toggle with `light-dark()` CSS, follows OS preference by default and persists your choice via `localStorage`.
 * **Polymorphic HTTP Handler**: A single HTTP handler serves both the rich HTML dashboard and a raw JSON API (`?format=json`), avoiding routing conflicts in your application.
 
 ---
