@@ -186,7 +186,7 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 
 		if r.URL.Query().Get("format") == "json" || strings.Contains(r.Header.Get("Accept"), "application/json") {
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(b)
+			_, _ = w.Write(b)
 			return
 		}
 
