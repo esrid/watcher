@@ -18,13 +18,13 @@ func TestDiff_NoChange(t *testing.T) {
 	}
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {Columns: cols, Indexes: idxs},
 		},
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {Columns: cols, Indexes: idxs},
 		},
 	}
@@ -36,10 +36,10 @@ func TestDiff_NoChange(t *testing.T) {
 }
 
 func TestDiff_AddedTable(t *testing.T) {
-	a := SchemaSnapshot{At: time.Now().Add(-5 * time.Second), Tables: map[string]tableSnapshot{}}
+	a := SchemaSnapshot{At: time.Now().Add(-5 * time.Second), Tables: map[string]TableSnapshot{}}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
@@ -55,13 +55,13 @@ func TestDiff_AddedTable(t *testing.T) {
 func TestDiff_DroppedTable(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
 		},
 	}
-	b := SchemaSnapshot{At: time.Now(), Tables: map[string]tableSnapshot{}}
+	b := SchemaSnapshot{At: time.Now(), Tables: map[string]TableSnapshot{}}
 
 	res := diff(a, b)
 	assert.Empty(t, res.AddedTables)
@@ -72,7 +72,7 @@ func TestDiff_DroppedTable(t *testing.T) {
 func TestDiff_AddedColumn(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
@@ -80,7 +80,7 @@ func TestDiff_AddedColumn(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{
 					{Name: "id", Type: "int", PK: true},
@@ -101,7 +101,7 @@ func TestDiff_AddedColumn(t *testing.T) {
 func TestDiff_DroppedColumn(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{
 					{Name: "id", Type: "int", PK: true},
@@ -112,7 +112,7 @@ func TestDiff_DroppedColumn(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
@@ -129,7 +129,7 @@ func TestDiff_DroppedColumn(t *testing.T) {
 func TestDiff_TypeChange(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "age", Type: "text"}},
 			},
@@ -137,7 +137,7 @@ func TestDiff_TypeChange(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "age", Type: "int"}},
 			},
@@ -152,7 +152,7 @@ func TestDiff_TypeChange(t *testing.T) {
 func TestDiff_AddedIndex(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
@@ -160,7 +160,7 @@ func TestDiff_AddedIndex(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 				Indexes: []Index{{Name: "idx_id", Unique: true, Columns: []string{"id"}}},
@@ -177,7 +177,7 @@ func TestDiff_AddedIndex(t *testing.T) {
 func TestDiff_DroppedIndex(t *testing.T) {
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 				Indexes: []Index{{Name: "idx_id", Unique: true, Columns: []string{"id"}}},
@@ -186,7 +186,7 @@ func TestDiff_DroppedIndex(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{{Name: "id", Type: "int", PK: true}},
 			},
@@ -203,7 +203,7 @@ func TestDiff_DeterministicSorting(t *testing.T) {
 	// Diffs with mixed names should be sorted alphabetically in output
 	a := SchemaSnapshot{
 		At: time.Now().Add(-5 * time.Second),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{
 					{Name: "z_col", Type: "text"},
@@ -221,7 +221,7 @@ func TestDiff_DeterministicSorting(t *testing.T) {
 	}
 	b := SchemaSnapshot{
 		At: time.Now(),
-		Tables: map[string]tableSnapshot{
+		Tables: map[string]TableSnapshot{
 			"users": {
 				Columns: []ColumnMeta{}, // dropped z_col, a_col
 			},
@@ -304,3 +304,43 @@ func TestDiffer_Operations(t *testing.T) {
 	assert.Equal(t, snap1.At, res.Before)
 	assert.Equal(t, snap2.At, res.After)
 }
+
+func TestDiffer_LastNonEmptyDiff(t *testing.T) {
+	fi := &fakeInspector{
+		tables: []string{"users"},
+		columns: map[string][]ColumnMeta{
+			"users": {{Name: "id", Type: "int", PK: true}},
+		},
+		indexes: map[string][]Index{
+			"users": {},
+		},
+	}
+
+	d := NewDiffer(fi)
+
+	// Snapshot 1: baseline
+	_, err := d.Snapshot(context.Background())
+	assert.NoError(t, err)
+
+	// Snapshot 2: add order table (non-empty diff)
+	fi.tables = append(fi.tables, "orders")
+	fi.columns["orders"] = []ColumnMeta{{Name: "id", Type: "int", PK: true}}
+	_, err = d.Snapshot(context.Background())
+	assert.NoError(t, err)
+
+	res1, ok := d.Diff()
+	assert.True(t, ok)
+	assert.Equal(t, []string{"orders"}, res1.AddedTables)
+
+	// Snapshot 3: no change (empty diff)
+	_, err = d.Snapshot(context.Background())
+	assert.NoError(t, err)
+
+	// Diff should STILL return the last non-empty diff (adding orders)
+	res2, ok := d.Diff()
+	assert.True(t, ok)
+	assert.Equal(t, []string{"orders"}, res2.AddedTables)
+	assert.Equal(t, res1.Before, res2.Before)
+	assert.Equal(t, res1.After, res2.After)
+}
+

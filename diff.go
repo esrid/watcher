@@ -1,8 +1,10 @@
 package watcher
 
 import (
+	"cmp"
 	"context"
-	"sort"
+	"fmt"
+	"slices"
 	"sync"
 	"time"
 )
@@ -10,10 +12,11 @@ import (
 // SchemaSnapshot is a point-in-time capture of the full schema.
 type SchemaSnapshot struct {
 	At     time.Time
-	Tables map[string]tableSnapshot // keyed by table name
+	Tables map[string]TableSnapshot // keyed by table name
 }
 
-type tableSnapshot struct {
+// TableSnapshot describes a single table structure in a snapshot.
+type TableSnapshot struct {
 	Columns []ColumnMeta
 	Indexes []Index
 }
@@ -25,6 +28,11 @@ type SchemaDiff struct {
 	AddedTables   []string    `json:"addedTables"`
 	DroppedTables []string    `json:"droppedTables"`
 	Modified      []TableDiff `json:"modified"`
+}
+
+// Empty returns true if there are no changes in the diff.
+func (sd SchemaDiff) Empty() bool {
+	return len(sd.AddedTables) == 0 && len(sd.DroppedTables) == 0 && len(sd.Modified) == 0
 }
 
 // TableDiff describes changes within a single table.
@@ -50,39 +58,67 @@ type Differ struct {
 	inspector Inspector
 	prev      *SchemaSnapshot // nil until first Snapshot call
 	curr      *SchemaSnapshot // nil until first Snapshot call
+	lastDiff  SchemaDiff      // last non-empty diff
+	hasDiff   bool            // true once we have at least 2 snapshots
 }
 
 // NewDiffer creates a new Differ.
 func NewDiffer(inspector Inspector) *Differ {
-	return &Differ{
-		inspector: inspector,
-	}
+	return &Differ{inspector: inspector}
+}
+
+// Watch takes a snapshot on every tick of interval until ctx is cancelled.
+// It calls Snapshot immediately on the first tick, so the first diff is
+// available after two intervals. Snapshot errors are logged and do not stop
+// the loop.
+func (d *Differ) Watch(ctx context.Context, interval time.Duration, onErr func(error)) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil && onErr != nil {
+				onErr(fmt.Errorf("schema watcher panicked: %v", r))
+			}
+		}()
+
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				if _, err := d.Snapshot(ctx); err != nil && onErr != nil {
+					// Avoid reporting error if the context has been cancelled
+					if ctx.Err() == nil {
+						onErr(err)
+					}
+				}
+			}
+		}
+	}()
 }
 
 // Snapshot captures the current schema state. Thread-safe.
 // The new snapshot becomes "curr"; the previous "curr" becomes "prev".
 func (d *Differ) Snapshot(ctx context.Context) (SchemaSnapshot, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
+	// 1. Gather all data unlocked to avoid lock contention
 	tables, err := d.inspector.Tables(ctx)
 	if err != nil {
-		return SchemaSnapshot{}, err
+		return SchemaSnapshot{}, fmt.Errorf("failed to fetch tables: %w", err)
 	}
 
-	snapTables := make(map[string]tableSnapshot, len(tables))
+	snapTables := make(map[string]TableSnapshot, len(tables))
 	for _, t := range tables {
 		cols, err := d.inspector.ColumnMeta(ctx, t)
 		if err != nil {
-			return SchemaSnapshot{}, err
+			return SchemaSnapshot{}, fmt.Errorf("failed to fetch columns for table %s: %w", t, err)
 		}
 
 		idxs, err := d.inspector.Indexes(ctx, t)
 		if err != nil {
-			return SchemaSnapshot{}, err
+			return SchemaSnapshot{}, fmt.Errorf("failed to fetch indexes for table %s: %w", t, err)
 		}
 
-		snapTables[t] = tableSnapshot{
+		snapTables[t] = TableSnapshot{
 			Columns: cols,
 			Indexes: idxs,
 		}
@@ -93,23 +129,45 @@ func (d *Differ) Snapshot(ctx context.Context) (SchemaSnapshot, error) {
 		Tables: snapTables,
 	}
 
+	// Read the current snapshot pointer under a brief read-lock to compute diff unlocked
+	d.mu.RLock()
+	currentSnap := d.curr
+	d.mu.RUnlock()
+
+	var newDiff SchemaDiff
+	var hasNewDiff bool
+	if currentSnap != nil {
+		newDiff = diff(*currentSnap, snap)
+		hasNewDiff = true
+	}
+
+	// 2. Perform quick updates under write lock
+	d.mu.Lock()
 	d.prev = d.curr
 	d.curr = &snap
+
+	if hasNewDiff {
+		d.hasDiff = true
+		if !newDiff.Empty() {
+			d.lastDiff = newDiff
+		}
+	}
+	d.mu.Unlock()
 
 	return snap, nil
 }
 
-// Diff returns the diff between the two most recent snapshots.
+// Diff returns the last non-empty diff, or the latest empty diff if no changes have ever occurred.
 // Returns zero SchemaDiff and false when fewer than two snapshots exist.
 func (d *Differ) Diff() (SchemaDiff, bool) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	if d.prev == nil || d.curr == nil {
+	if !d.hasDiff {
 		return SchemaDiff{}, false
 	}
 
-	return diff(*d.prev, *d.curr), true
+	return d.lastDiff, true
 }
 
 // diff computes the schema diff between snapshot a (before) and b (after).
@@ -130,8 +188,8 @@ func diff(a, b SchemaSnapshot) SchemaDiff {
 		}
 	}
 
-	sort.Strings(addedTables)
-	sort.Strings(droppedTables)
+	slices.Sort(addedTables)
+	slices.Sort(droppedTables)
 
 	// 2. Table modifications (columns and indexes)
 	for t, bTab := range b.Tables {
@@ -198,13 +256,13 @@ func diff(a, b SchemaSnapshot) SchemaDiff {
 		}
 
 		if len(addedCols) > 0 || len(droppedCols) > 0 || len(typeChanges) > 0 || len(addedIdxs) > 0 || len(droppedIdxs) > 0 {
-			sort.Strings(addedCols)
-			sort.Strings(droppedCols)
-			sort.Slice(typeChanges, func(i, j int) bool {
-				return typeChanges[i].Column < typeChanges[j].Column
+			slices.Sort(addedCols)
+			slices.Sort(droppedCols)
+			slices.SortFunc(typeChanges, func(a, b TypeChange) int {
+				return cmp.Compare(a.Column, b.Column)
 			})
-			sort.Strings(addedIdxs)
-			sort.Strings(droppedIdxs)
+			slices.Sort(addedIdxs)
+			slices.Sort(droppedIdxs)
 
 			modified = append(modified, TableDiff{
 				Table:          t,
@@ -217,8 +275,8 @@ func diff(a, b SchemaSnapshot) SchemaDiff {
 		}
 	}
 
-	sort.Slice(modified, func(i, j int) bool {
-		return modified[i].Table < modified[j].Table
+	slices.SortFunc(modified, func(a, b TableDiff) int {
+		return cmp.Compare(a.Table, b.Table)
 	})
 
 	return SchemaDiff{

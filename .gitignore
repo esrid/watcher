@@ -3,6 +3,10 @@
 *.out
 *.prof
 
+# Local data
+*.db
+.claude/
+
 # Compiled binaries (only at the root)
 /watcher
 /watcher.exe

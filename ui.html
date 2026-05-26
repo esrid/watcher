@@ -49,6 +49,18 @@
   --search-bd:     light-dark(rgba(0,0,0,.07),rgba(255,255,255,.09));
   --search-sh:     light-dark(rgba(0,0,0,.13),rgba(0,0,0,.65));
   --backdrop:      light-dark(rgba(0,0,0,.1), rgba(0,0,0,.42));
+  --add-bg:        light-dark(rgba(22,163,74,.06),   rgba(74,222,128,.05));
+  --add-border:    light-dark(rgba(22,163,74,.28),   rgba(74,222,128,.2));
+  --add-text:      light-dark(#15803d,               #4ade80);
+  --add-badge:     light-dark(rgba(22,163,74,.10),   rgba(74,222,128,.12));
+  --del-bg:        light-dark(rgba(220,38,38,.05),   rgba(248,113,113,.05));
+  --del-border:    light-dark(rgba(220,38,38,.25),   rgba(248,113,113,.2));
+  --del-text:      light-dark(#dc2626,               #f87171);
+  --del-badge:     light-dark(rgba(220,38,38,.10),   rgba(248,113,113,.12));
+  --mod-bg:        light-dark(rgba(234,88,12,.05),   rgba(251,146,60,.05));
+  --mod-border:    light-dark(rgba(234,88,12,.25),   rgba(251,146,60,.2));
+  --mod-text:      light-dark(#c2410c,               #fb923c);
+  --mod-badge:     light-dark(rgba(234,88,12,.09),   rgba(251,146,60,.12));
 }
 
 body {
@@ -324,20 +336,30 @@ body {
 .search-pill {
   position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 8px;
-  padding: 5px 12px 5px 10px;
-  background: var(--ui-bg); border: 1px solid var(--ui-border);
+  padding: 5px 14px 5px 11px;
+  background: var(--card-bg); border: 1px solid var(--card-border);
   border-radius: 99px; cursor: pointer; z-index: 200;
   color: var(--ui-text);
   font-size: 12px; font-family: ui-monospace, monospace;
   transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
-  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  box-shadow: 0 2px 12px var(--shadow-card);
   white-space: nowrap;
 }
 .search-pill:hover {
   background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr);
-  color: var(--ui-hover-txt); box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  color: var(--ui-hover-txt); box-shadow: 0 4px 20px var(--shadow-card);
 }
 .search-pill-label { color: var(--muted); }
+.search-pill-clear {
+  display: none; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  font-size: 12px; line-height: 1;
+  color: var(--col-type);
+  background: var(--ui-hover-bg);
+  transition: background .12s, color .12s;
+  flex-shrink: 0;
+}
+.search-pill-clear:hover { background: var(--ui-active-bg); color: var(--text); }
 .search-pill kbd {
   font-size: 10px; font-family: ui-monospace, monospace;
   color: var(--col-type);
@@ -400,11 +422,187 @@ body {
 }
 .theme-btn:hover  { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
 .theme-btn:active { background: var(--ui-active-bg); }
+
+/* ── View tabs ───────────────────────────────────────────── */
+.view-tabs {
+  position: fixed; top: 12px; left: 12px;
+  display: flex; align-items: center; gap: 2px;
+  z-index: 200;
+}
+.view-tab {
+  padding: 5px 12px;
+  background: var(--ui-bg); border: 1px solid var(--ui-border);
+  border-radius: 6px; color: var(--ui-text);
+  font-size: 12px; font-family: ui-monospace, monospace;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.view-tab.active { background: var(--ui-active-bg); color: var(--text); border-color: var(--ui-hover-bdr); }
+.view-tab:hover:not(.active) { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
+.view-tab-badge {
+  display: none; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px;
+  background: var(--mod-badge); border: 1px solid var(--mod-border);
+  border-radius: 99px; color: var(--mod-text);
+  font-size: 9px; font-weight: 700; padding: 0 3px;
+  font-family: ui-monospace, monospace;
+}
+
+/* ── Changes panel ───────────────────────────────────────── */
+.changes-panel {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--bg);
+  background-image: radial-gradient(circle, var(--bg-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: 10;
+  overflow-y: auto;
+  padding: 60px 24px 48px;
+}
+.changes-panel.active { display: block; }
+.changes-inner { max-width: 760px; margin: 0 auto; padding-top: 12px; }
+
+.changes-ts {
+  font-size: 11px; font-family: ui-monospace, monospace;
+  color: var(--muted); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ts-arrow { color: var(--card-border); }
+
+.changes-empty {
+  text-align: center; padding: 80px 0;
+  font-family: ui-monospace, monospace; font-size: 13px; color: var(--muted);
+  line-height: 2;
+}
+
+.changes-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.summary-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 99px;
+  font-size: 11px; font-weight: 600; font-family: ui-monospace, monospace;
+  border: 1px solid;
+}
+.pill-add { background: var(--add-badge); border-color: var(--add-border); color: var(--add-text); }
+.pill-del { background: var(--del-badge); border-color: var(--del-border); color: var(--del-text); }
+.pill-mod { background: var(--mod-badge); border-color: var(--mod-border); color: var(--mod-text); }
+
+.diff-block {
+  border: 1px solid var(--card-border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 12px;
+  box-shadow: 0 1px 8px var(--shadow-card);
+}
+.diff-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: var(--header-bg); border-bottom: 1px solid var(--card-border);
+  font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600;
+}
+.diff-header.add { background: var(--add-bg); border-color: var(--add-border); }
+.diff-header.del { background: var(--del-bg); border-color: var(--del-border); }
+.diff-header.mod { background: var(--mod-bg); border-color: var(--mod-border); }
+
+.diff-sign { font-size: 14px; font-weight: 700; width: 16px; flex-shrink: 0; }
+.diff-header.add .diff-sign { color: var(--add-text); }
+.diff-header.del .diff-sign { color: var(--del-text); }
+.diff-header.mod .diff-sign { color: var(--mod-text); }
+.diff-table-name { flex: 1; }
+.diff-kind {
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 3px; letter-spacing: .06em;
+}
+.diff-header.add .diff-kind { background: var(--add-badge); color: var(--add-text); border: 1px solid var(--add-border); }
+.diff-header.del .diff-kind { background: var(--del-badge); color: var(--del-text); border: 1px solid var(--del-border); }
+.diff-header.mod .diff-kind { background: var(--mod-badge); color: var(--mod-text); border: 1px solid var(--mod-border); }
+
+.diff-rows { font-family: ui-monospace, monospace; font-size: 12px; }
+.diff-row {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 5px 16px 5px 12px;
+  border-bottom: 1px solid var(--card-border);
+}
+.diff-row:last-child { border-bottom: none; }
+.diff-row.row-add { background: var(--add-bg); }
+.diff-row.row-del { background: var(--del-bg); }
+.diff-row.row-mod { background: var(--mod-bg); }
+.row-gutter { font-size: 13px; font-weight: 700; width: 14px; flex-shrink: 0; text-align: center; }
+.row-add .row-gutter { color: var(--add-text); }
+.row-del .row-gutter { color: var(--del-text); }
+.row-mod .row-gutter { color: var(--mod-text); }
+.row-category {
+  font-size: 9px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted);
+  width: 48px; flex-shrink: 0; padding-top: 1px;
+}
+.row-content { flex: 1; color: var(--text); }
+.row-before { color: var(--del-text); text-decoration: line-through; margin-right: 6px; }
+.row-after  { color: var(--add-text); }
 </style>
 </head>
 <body>
 <svg id="lines"></svg>
 <div id="canvas"></div>
+
+<!-- View tab switcher -->
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-erd">ERD</button>
+  <button class="view-tab" id="tab-changes">Changes <span class="view-tab-badge" id="changes-badge">0</span></button>
+</div>
+
+<!-- Changes panel -->
+<div class="changes-panel" id="changes-panel">
+  <div class="changes-inner">
+    <div id="changes-ts" class="changes-ts">—</div>
+    <div id="changes-root"></div>
+  </div>
+</div>
+
+<!-- Diff templates (inert, never rendered) -->
+<template id="tpl-summary-pill">
+  <span class="summary-pill"></span>
+</template>
+
+<template id="tpl-diff-block-simple">
+  <div class="diff-block">
+    <div class="diff-header">
+      <span class="diff-sign"></span>
+      <span class="diff-table-name"></span>
+      <span class="diff-kind"></span>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-diff-block-rows">
+  <div class="diff-block">
+    <div class="diff-header mod">
+      <span class="diff-sign">~</span>
+      <span class="diff-table-name"></span>
+      <span class="diff-kind">MODIFIED</span>
+    </div>
+    <div class="diff-rows"></div>
+  </div>
+</template>
+
+<template id="tpl-diff-row-simple">
+  <div class="diff-row">
+    <span class="row-gutter"></span>
+    <span class="row-category"></span>
+    <span class="row-content"></span>
+  </div>
+</template>
+
+<template id="tpl-diff-row-type">
+  <div class="diff-row row-mod">
+    <span class="row-gutter">~</span>
+    <span class="row-category">type</span>
+    <span class="row-content">
+      <span class="row-col-name"></span>
+      <span class="row-before"></span>
+      <span class="row-after"></span>
+    </span>
+  </div>
+</template>
+
 <div class="dot-live">live schema</div>
 <button class="theme-btn" id="theme-toggle" title="Toggle light/dark mode">◑</button>
 
@@ -414,8 +612,9 @@ body {
     <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
     <line x1="7.5" y1="7.5" x2="10" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
   </svg>
-  <span class="search-pill-label">Search tables…</span>
+  <span class="search-pill-label" id="search-pill-label">Search tables…</span>
   <kbd>⌘K</kbd>
+  <span class="search-pill-clear" id="search-pill-clear" title="Clear filter">×</span>
 </button>
 
 <!-- Search overlay -->
@@ -651,6 +850,7 @@ function openSearch() {
   document.getElementById('search-pill').style.visibility = 'hidden';
   const inp = document.getElementById('search-input');
   inp.focus();
+  inp.select();
   updateSearchCount();
 }
 
@@ -659,9 +859,15 @@ function closeSearch() {
   searchOpen = false;
   document.getElementById('search-overlay').classList.remove('open');
   document.getElementById('search-pill').style.visibility = '';
+  // Filter stays active — don't reset cards or clear input
+  updatePill();
+}
+
+function clearSearch() {
   document.getElementById('search-input').value = '';
   document.querySelectorAll('.card').forEach(c => c.classList.remove('search-hidden'));
   updateSearchCount();
+  updatePill();
   requestAnimationFrame(drawLines);
 }
 
@@ -675,7 +881,21 @@ function filterTables(q) {
     if (!hide) visible++;
   });
   updateSearchCount(visible, total, query);
+  updatePill(q.trim());
   requestAnimationFrame(drawLines);
+}
+
+function updatePill(query) {
+  const q = query ?? document.getElementById('search-input').value.trim();
+  const label = document.getElementById('search-pill-label');
+  const clear  = document.getElementById('search-pill-clear');
+  if (q) {
+    label.textContent = q;
+    clear.style.display = 'flex';
+  } else {
+    label.textContent = 'Search tables…';
+    clear.style.display = 'none';
+  }
 }
 
 function updateSearchCount(visible, total, query) {
@@ -694,6 +914,7 @@ function updateSearchCount(visible, total, query) {
 document.getElementById('search-input').addEventListener('input', e => filterTables(e.target.value));
 document.getElementById('search-backdrop').addEventListener('click', closeSearch);
 document.getElementById('search-pill').addEventListener('click', openSearch);
+document.getElementById('search-pill-clear').addEventListener('click', e => { e.stopPropagation(); clearSearch(); });
 
 // ── Render ────────────────────────────────────────────────
 function render() {
@@ -968,6 +1189,164 @@ async function checkUpdates() {
 }
 
 setInterval(checkUpdates, 1500);
+
+// ── View switcher ─────────────────────────────────────────
+let activeView = 'erd';
+
+function switchView(view) {
+  activeView = view;
+  const panel  = document.getElementById('changes-panel');
+  const canvas = document.getElementById('canvas');
+  const lines  = document.getElementById('lines');
+  const pill   = document.getElementById('search-pill');
+  const zoom   = document.querySelector('.zoom-controls');
+
+  document.getElementById('tab-erd').classList.toggle('active', view === 'erd');
+  document.getElementById('tab-changes').classList.toggle('active', view === 'changes');
+
+  const inChanges = view === 'changes';
+  panel.classList.toggle('active', inChanges);
+  canvas.style.display = inChanges ? 'none' : '';
+  lines.style.display  = inChanges ? 'none' : '';
+  pill.style.display   = inChanges ? 'none' : '';
+  zoom.style.display   = inChanges ? 'none' : '';
+
+  if (inChanges) {
+    if (searchOpen) closeSearch();
+    pollChanges();
+  } else {
+    requestAnimationFrame(drawLines);
+  }
+}
+
+document.getElementById('tab-erd').addEventListener('click',     () => switchView('erd'));
+document.getElementById('tab-changes').addEventListener('click', () => switchView('changes'));
+
+// ── Diff rendering ────────────────────────────────────────
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function cloneTpl(id) {
+  return document.getElementById(id).content.cloneNode(true);
+}
+
+function makeSimpleRow(rowClass, gutter, category, content) {
+  const node = cloneTpl('tpl-diff-row-simple');
+  const row  = node.querySelector('.diff-row');
+  row.classList.add(rowClass);
+  row.querySelector('.row-gutter').textContent   = gutter;
+  row.querySelector('.row-category').textContent = category;
+  row.querySelector('.row-content').textContent  = content;
+  return node;
+}
+
+function renderDiff(diff) {
+  const root  = document.getElementById('changes-root');
+  const tsEl  = document.getElementById('changes-ts');
+  const badge = document.getElementById('changes-badge');
+
+  if (!diff || (!diff.before && !diff.after)) {
+    root.replaceChildren(Object.assign(document.createElement('div'), { className: 'changes-empty', textContent: 'No snapshot diff yet.\nWaiting for two snapshots…' }));
+    tsEl.replaceChildren(document.createTextNode('—'));
+    badge.style.display = 'none';
+    return;
+  }
+
+  const tsNodes = [
+    Object.assign(document.createElement('span'), { textContent: fmtTime(diff.before) }),
+    Object.assign(document.createElement('span'), { className: 'ts-arrow', textContent: '→' }),
+    Object.assign(document.createElement('span'), { textContent: fmtTime(diff.after) }),
+  ];
+  tsEl.replaceChildren(...tsNodes);
+
+  const added   = diff.addedTables   || [];
+  const dropped = diff.droppedTables || [];
+  const mods    = diff.modified      || [];
+  const total   = added.length + dropped.length + mods.length;
+
+  root.replaceChildren();
+
+  if (total === 0) {
+    root.appendChild(Object.assign(document.createElement('div'), { className: 'changes-empty', textContent: 'No schema changes detected.' }));
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.style.display = 'inline-flex';
+  badge.textContent   = total;
+
+  // Summary pills
+  const summary = document.createElement('div');
+  summary.className = 'changes-summary';
+  [
+    { count: added.length,   cls: 'pill-add', label: `+ ${added.length} table${added.length>1?'s':''} added` },
+    { count: dropped.length, cls: 'pill-del', label: `− ${dropped.length} table${dropped.length>1?'s':''} dropped` },
+    { count: mods.length,    cls: 'pill-mod', label: `~ ${mods.length} table${mods.length>1?'s':''} modified` },
+  ].forEach(({ count, cls, label }) => {
+    if (!count) return;
+    const node = cloneTpl('tpl-summary-pill');
+    const pill = node.querySelector('.summary-pill');
+    pill.classList.add(cls);
+    pill.textContent = label;
+    summary.appendChild(node);
+  });
+  root.appendChild(summary);
+
+  // Added tables
+  added.forEach(t => {
+    const node = cloneTpl('tpl-diff-block-simple');
+    node.querySelector('.diff-header').classList.add('add');
+    node.querySelector('.diff-sign').textContent       = '+';
+    node.querySelector('.diff-table-name').textContent = t;
+    node.querySelector('.diff-kind').textContent       = 'TABLE ADDED';
+    root.appendChild(node);
+  });
+
+  // Dropped tables
+  dropped.forEach(t => {
+    const node = cloneTpl('tpl-diff-block-simple');
+    node.querySelector('.diff-header').classList.add('del');
+    node.querySelector('.diff-sign').textContent       = '−';
+    node.querySelector('.diff-table-name').textContent = t;
+    node.querySelector('.diff-kind').textContent       = 'TABLE DROPPED';
+    root.appendChild(node);
+  });
+
+  // Modified tables
+  mods.forEach(td => {
+    const rows = [];
+    (td.addedColumns   || []).forEach(c  => rows.push(makeSimpleRow('row-add', '+', 'column', c)));
+    (td.droppedColumns || []).forEach(c  => rows.push(makeSimpleRow('row-del', '−', 'column', c)));
+    (td.addedIndexes   || []).forEach(ix => rows.push(makeSimpleRow('row-add', '+', 'index',  ix)));
+    (td.droppedIndexes || []).forEach(ix => rows.push(makeSimpleRow('row-del', '−', 'index',  ix)));
+    (td.typeChanges    || []).forEach(tc => {
+      const node = cloneTpl('tpl-diff-row-type');
+      node.querySelector('.row-col-name').textContent = tc.column;
+      node.querySelector('.row-before').textContent   = tc.before;
+      node.querySelector('.row-after').textContent    = tc.after;
+      rows.push(node);
+    });
+    if (!rows.length) return;
+
+    const block = cloneTpl('tpl-diff-block-rows');
+    block.querySelector('.diff-table-name').textContent = td.table;
+    const rowsEl = block.querySelector('.diff-rows');
+    rows.forEach(r => rowsEl.appendChild(r));
+    root.appendChild(block);
+  });
+}
+
+async function pollChanges() {
+  if (activeView !== 'changes') return;
+  try {
+    const res = await fetch('/changes', { headers: { Accept: 'application/json' } });
+    if (res.ok) renderDiff(await res.json());
+  } catch (_) {}
+}
+
+setInterval(() => { if (activeView === 'changes') pollChanges(); }, 3000);
 </script>
 </body>
 </html>

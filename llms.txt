@@ -1,38 +1,64 @@
 # DB Watcher
 
-DB Watcher is a lightweight, zero-dependency schema introspection library for Go. It allows developers to mount an interactive database schema inspector dashboard directly onto their web application.
+DB Watcher is a lightweight, zero-dependency schema introspection library for Go. Mount a real-time, interactive database schema dashboard directly onto your web application.
 
 ## Key APIs
 
 ### watcher.NewInspector
 
-Instantiates a database inspector by inspecting the type of the `*sql.DB` driver.
+Detects the underlying driver and returns the matching Inspector implementation.
 Signature: `func NewInspector(db *sql.DB) (Inspector, error)`
 
-Supported Drivers:
-- `*sqlite3.SQLiteDriver` (CGO sqlite3)
-- `*sqlite.Driver` (`modernc.org/sqlite` pure Go sqlite)
-- `*pq.Driver` (`github.com/lib/pq` postgres)
-- `*stdlib.Driver` (`github.com/jackc/pgx/v5` stdlib postgres)
-- `*mysql.MySQLDriver` (`github.com/go-sql-driver/mysql` mysql/mariadb)
+Supported drivers:
+- `*sqlite3.SQLiteDriver` (github.com/mattn/go-sqlite3)
+- `*sqlite.Driver` (modernc.org/sqlite, pure Go)
+- `*pq.Driver` (github.com/lib/pq)
+- `*stdlib.Driver` (github.com/jackc/pgx/v5/stdlib)
+- `*mysql.MySQLDriver` (github.com/go-sql-driver/mysql)
+
+Instrumented wrappers implementing `Unwrap() driver.Driver` are resolved automatically. Unknown wrappers fall back to dialect probing.
 
 ### watcher.HTTPHandler
 
-Returns an `http.HandlerFunc` that handles browser dashboard requests (HTML) and machine schema requests (JSON).
+Serves the interactive ERD dashboard (HTML) or raw JSON schema.
 Signature: `func HTTPHandler(inspector Inspector) http.HandlerFunc`
 
-- **Dashboard HTML view**: Standard web request.
-- **JSON raw schema view**: Query parameter `?format=json` or `Accept: application/json` header.
+- HTML dashboard: standard browser request
+- JSON: `?format=json` query param or `Accept: application/json` header
 
-## Web Dashboard Features
+JSON shape: `{ tables: [{ name, cols: [{ name, type, pk, fk, notNull, default, unique }], indexes: [{ name, unique, columns, partial }] }], relations: [{ src, srcCol, tgt, tgtCol }] }`
 
-- **Live Schema Updates**: Polls `?format=json` every 1.5 seconds and updates the schema live in the browser without reloading.
-- **Persistent Coordinates**: Dragged table positions are saved in `localStorage` as `watcher_pos_<tableName>`. Re-rendering preserves drag locations.
-- **Relationship Highlighting**: Interactive relationship lines trace foreign key connections. Table header clicks highlight associated tables.
+### watcher.NewDiffer / Differ.Watch / watcher.ChangesHandler
+
+Track schema changes between snapshots.
+
+```go
+d := watcher.NewDiffer(inspector)
+d.Snapshot(ctx)
+d.Watch(ctx, 5*time.Second, func(err error) { ... })
+http.HandleFunc("/changes", watcher.ChangesHandler(d))
+```
+
+`ChangesHandler`: GET returns latest diff, POST takes a new snapshot then returns diff.
+`Differ` persists the last non-empty diff — changes stay visible until a new migration produces a fresh diff.
+
+SchemaDiff shape: `{ before, after, addedTables, droppedTables, modified: [{ table, addedColumns, droppedColumns, typeChanges: [{ column, before, after }], addedIndexes, droppedIndexes }] }`
+
+## Dashboard Features
+
+- **ERD view** — draggable cards, animated FK relationship paths, click to highlight connections, double-click to collapse
+- **Changes view** — built into the same UI via tab switcher, renders the SchemaDiff from ChangesHandler
+- **Global search** — `⌘K` or `/` to filter tables; filter persists after closing the overlay
+- **Zoom** — `Ctrl+`/`Ctrl-`/`Ctrl+0`, mouse wheel + Ctrl/Cmd
+- **Persistent layout** — card positions and collapsed states saved in localStorage
+- **Light/dark mode** — follows OS preference, togglable, persisted in localStorage
+- **Live updates** — polls schema every 1.5s, diff every 3s; updates without page reload
 
 ## Testing
 
-Integration tests use Testcontainers for Go to run tests against real databases (Postgres and MySQL).
+Integration tests use Testcontainers for Go (requires Docker).
 
-- Run unit tests: `go test ./...`
-- Run integration tests: `go test -tags=integration -v ./...`
+```bash
+go test ./...                          # unit tests
+go test -tags=integration -v ./...    # full integration tests
+```
