@@ -176,10 +176,19 @@ type jsonRel struct {
 //   - Machine / JSON view: Serves the raw schema payload when requested via the "?format=json"
 //     query parameter or an "Accept: application/json" header.
 func HTTPHandler(inspector Inspector) http.HandlerFunc {
-	tmpl := template.Must(template.ParseFS(uiFS, "ui.html"))
+	tmpl   := template.Must(template.ParseFS(uiFS, "ui.html"))
+	differ := NewDiffer(inspector)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		wantsJSON := r.URL.Query().Get("format") == "json" ||
+			strings.Contains(r.Header.Get("Accept"), "application/json")
+
+		// Snapshot on every JSON poll so the diff stays current.
+		if wantsJSON {
+			_, _ = differ.Snapshot(ctx)
+		}
 
 		tables, err := inspector.Tables(ctx)
 		if err != nil {
@@ -235,10 +244,16 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 			})
 		}
 
+		var schDiff *SchemaDiff
+		if d, ok := differ.Diff(); ok {
+			schDiff = &d
+		}
+
 		payload := struct {
-			Tables    []jsonTable `json:"tables"`
-			Relations []jsonRel   `json:"relations"`
-		}{Tables: tbls, Relations: rels}
+			Tables    []jsonTable  `json:"tables"`
+			Relations []jsonRel    `json:"relations"`
+			Diff      *SchemaDiff  `json:"diff,omitempty"`
+		}{Tables: tbls, Relations: rels, Diff: schDiff}
 
 		b, err := json.Marshal(payload)
 		if err != nil {
@@ -246,7 +261,7 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 			return
 		}
 
-		if r.URL.Query().Get("format") == "json" || strings.Contains(r.Header.Get("Accept"), "application/json") {
+		if wantsJSON {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(b)
 			return

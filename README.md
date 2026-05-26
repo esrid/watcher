@@ -4,18 +4,18 @@
 [![License](https://img.shields.io/github/license/esrid/watcher)](./LICENSE)
 [![Go Reference](https://pkg.go.dev/badge/github.com/esrid/watcher.svg)](https://pkg.go.dev/github.com/esrid/watcher)
 
-**DB Watcher** is a lightweight, zero-dependency schema introspection library for Go. Mount a real-time, interactive database schema dashboard directly onto your existing web application in seconds.
+**DB Watcher** is a lightweight Go library for real-time database schema introspection. Mount an interactive ERD dashboard and schema change tracker directly onto your existing HTTP server — no external dependencies, no separate process.
 
 <div align="center">
   <table>
     <tr>
       <td align="center"><img src="erd-dark.png" alt="ERD Dashboard" width="280" /></td>
-      <td align="center"><img src="card-detail.png" alt="Table Card" width="280" /></td>
-      <td align="center"><img src="changes-view.png" alt="Schema Changes" width="280" /></td>
+      <td align="center"><img src="card-detail.png" alt="Table Card Detail" width="280" /></td>
+      <td align="center"><img src="changes-view.png" alt="Schema Changes View" width="280" /></td>
     </tr>
     <tr>
       <td align="center"><sub>ERD Dashboard</sub></td>
-      <td align="center"><sub>Table Detail</sub></td>
+      <td align="center"><sub>Table Card Detail</sub></td>
       <td align="center"><sub>Schema Changes</sub></td>
     </tr>
   </table>
@@ -25,65 +25,97 @@
 
 ## Features
 
-- **Multi-driver support** — SQLite (`go-sqlite3`, `modernc.org/sqlite`), PostgreSQL (`lib/pq`, `pgx/v5`), MySQL/MariaDB (`go-sql-driver/mysql`). Instrumented wrappers (e.g. `otelsql`) are automatically unwrapped.
-- **Rich schema introspection** — tables, columns with full constraint metadata (`NOT NULL`, `DEFAULT`, `UNIQUE`), foreign keys, and indexes (unique, composite, partial).
-- **Interactive ERD** — drag tables, click to highlight relationships with animated flow paths, double-click to collapse cards.
-- **Schema changes view** — built into the same UI, shows added/dropped tables, column and index changes between snapshots. Persists the last non-empty diff so you don't miss it.
-- **Global search** — floating search bar (`⌘K` or `/`) filters tables by name, persists after closing.
-- **Persistent layout** — drag positions and collapsed states survive page reloads via `localStorage`.
-- **Light & Dark mode** — follows OS preference, togglable, persisted in `localStorage`.
-- **JSON API** — same endpoint serves the HTML dashboard or raw JSON (`?format=json` / `Accept: application/json`).
+- **Multi-driver** — SQLite, PostgreSQL, MySQL/MariaDB. Instrumented wrappers (`otelsql`, etc.) unwrapped automatically.
+- **Rich introspection** — columns with `NOT NULL`, `DEFAULT`, `UNIQUE`, PKs, FKs, indexes (unique, composite, partial).
+- **Interactive ERD** — draggable cards, animated FK paths, click to highlight relationships, double-click to collapse.
+- **Built-in schema changes** — the Changes tab is included in the dashboard. No second handler needed — diffs are tracked and delivered by the same polling request as the schema.
+- **Global search** — `⌘K` or `/` filters tables by name; filter stays active after closing the overlay.
+- **Persistent layout** — card positions and collapsed states saved in `localStorage`.
+- **Light & Dark mode** — follows OS preference, togglable, persisted across reloads.
+- **JSON API** — every endpoint serves the HTML dashboard or raw JSON.
 
 ---
 
-## Getting Started
+## Installation
 
 ```bash
 go get github.com/esrid/watcher
 ```
 
+---
+
+## Setup
+
+One handler is all you need:
+
 ```go
 package main
 
 import (
-    "context"
     "database/sql"
-    "fmt"
+    "log"
     "net/http"
-    "time"
 
     "github.com/esrid/watcher"
-    _ "github.com/mattn/go-sqlite3"
+    _ "github.com/mattn/go-sqlite3" // blank-import your driver
 )
 
 func main() {
     db, err := sql.Open("sqlite3", "app.db")
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
     defer db.Close()
 
     inspector, err := watcher.NewInspector(db)
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
 
-    // Optional: enable the Changes tab
-    differ := watcher.NewDiffer(inspector)
-    if _, err := differ.Snapshot(context.Background()); err != nil {
-        panic(err)
-    }
-    differ.Watch(context.Background(), 5*time.Second, func(err error) {
-        log.Println("snapshot error:", err)
-    })
+    http.HandleFunc("/_schema", watcher.HTTPHandler(inspector))
 
-    http.HandleFunc("/_schema",         watcher.HTTPHandler(inspector))
-    http.HandleFunc("/_schema/changes", watcher.ChangesHandler(differ))
-
-    fmt.Println("Dashboard → http://localhost:8080/_schema")
-    http.ListenAndServe(":8080", nil)
+    log.Println("dashboard → http://localhost:8080/_schema")
+    log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
+
+The dashboard polls itself every 1.5 seconds. Each poll takes a schema snapshot, computes the diff from the previous state, and delivers both in a single response. The ERD updates live. The **Changes** tab shows diffs as soon as the schema changes — no second handler, no background goroutine, nothing else to configure.
+
+---
+
+## Dashboard
+
+### ERD tab
+
+| Interaction | Action |
+|---|---|
+| Drag card header | Move the card |
+| Click card header | Highlight FK relationships |
+| Double-click card header | Collapse / expand card |
+| `⌘K` or `/` | Open table search |
+| `Esc` | Close search (filter stays active) |
+| `Ctrl`/`⌘` + scroll | Zoom |
+| `Ctrl`/`⌘` `+` / `-` / `0` | Zoom in / out / reset |
+
+Card positions and collapsed states are saved in `localStorage` and restored on reload.
+
+### Changes tab
+
+Shows the diff between the last two polls: tables added or dropped, columns added or dropped, type changes, indexes added or dropped. The last non-empty diff is persisted — changes stay visible after the schema stabilizes and are only replaced when the next migration triggers a new diff.
+
+---
+
+## Supported Drivers
+
+| Driver type | Package |
+|---|---|
+| `*sqlite3.SQLiteDriver` | `github.com/mattn/go-sqlite3` |
+| `*sqlite.Driver` | `modernc.org/sqlite` |
+| `*pq.Driver` | `github.com/lib/pq` |
+| `*stdlib.Driver` | `github.com/jackc/pgx/v5/stdlib` |
+| `*mysql.MySQLDriver` | `github.com/go-sql-driver/mysql` |
+
+Wrappers that implement `Unwrap() driver.Driver` (e.g. `otelsql`) are resolved automatically. Unknown wrappers fall back to dialect probing.
 
 ---
 
@@ -95,54 +127,7 @@ func main() {
 func NewInspector(db *sql.DB) (Inspector, error)
 ```
 
-Detects the underlying driver and returns the matching `Inspector` implementation.
-
-| Driver | Package |
-|--------|---------|
-| `*sqlite3.SQLiteDriver` | `github.com/mattn/go-sqlite3` |
-| `*sqlite.Driver` | `modernc.org/sqlite` |
-| `*pq.Driver` | `github.com/lib/pq` |
-| `*stdlib.Driver` | `github.com/jackc/pgx/v5/stdlib` |
-| `*mysql.MySQLDriver` | `github.com/go-sql-driver/mysql` |
-
-Instrumented wrappers that implement `Unwrap() driver.Driver` are resolved automatically. Unknown wrappers fall back to dialect probing.
-
-### `Inspector`
-
-```go
-type Inspector interface {
-    Tables(ctx context.Context) ([]string, error)
-    Columns(ctx context.Context, tableName string) ([]string, error)
-    Relations(ctx context.Context, tableName string) ([]string, error)
-    Indexes(ctx context.Context, tableName string) ([]Index, error)
-    ColumnMeta(ctx context.Context, tableName string) ([]ColumnMeta, error)
-}
-```
-
-### `Index`
-
-```go
-type Index struct {
-    Name    string   `json:"name"`
-    Unique  bool     `json:"unique"`
-    Columns []string `json:"columns"` // in key order
-    Partial bool     `json:"partial"` // true when a WHERE predicate exists
-}
-```
-
-### `ColumnMeta`
-
-```go
-type ColumnMeta struct {
-    Name    string `json:"name"`
-    Type    string `json:"type"`
-    PK      bool   `json:"pk"`
-    FK      bool   `json:"fk"`
-    NotNull bool   `json:"notNull"`
-    Default string `json:"default"` // empty = no explicit default
-    Unique  bool   `json:"unique"`
-}
-```
+Detects the driver and returns the matching `Inspector`. Returns an error if the driver is not recognised and dialect probing fails.
 
 ### `HTTPHandler`
 
@@ -150,7 +135,9 @@ type ColumnMeta struct {
 func HTTPHandler(inspector Inspector) http.HandlerFunc
 ```
 
-Serves the interactive ERD dashboard. When requested with `?format=json` or `Accept: application/json`, returns the raw JSON payload:
+Serves the dashboard. On each JSON poll it takes a schema snapshot, computes the diff, and returns everything in one payload. Responds with HTML for browser requests, JSON when `?format=json` is set or `Accept: application/json` is present.
+
+JSON response shape:
 
 ```json
 {
@@ -158,69 +145,65 @@ Serves the interactive ERD dashboard. When requested with `?format=json` or `Acc
     {
       "name": "users",
       "cols": [
-        {"name": "id",    "type": "int",    "pk": true,  "fk": false, "notNull": true,  "default": "",     "unique": false},
-        {"name": "email", "type": "varchar", "pk": false, "fk": false, "notNull": true,  "default": "",     "unique": true}
+        { "name": "id",    "type": "INTEGER", "pk": true,  "fk": false, "notNull": true,  "default": "",    "unique": false },
+        { "name": "email", "type": "TEXT",    "pk": false, "fk": false, "notNull": true,  "default": "",    "unique": true  }
       ],
       "indexes": [
-        {"name": "idx_active_users", "unique": false, "columns": ["created_at"], "partial": true}
+        { "name": "idx_active_users", "unique": false, "columns": ["created_at"], "partial": true }
       ]
     }
   ],
   "relations": [
-    {"src": "orders", "srcCol": "user_id", "tgt": "users", "tgtCol": "id"}
-  ]
+    { "src": "orders", "srcCol": "user_id", "tgt": "users", "tgtCol": "id" }
+  ],
+  "diff": {
+    "before": "2024-01-15T10:00:00Z",
+    "after":  "2024-01-15T10:01:30Z",
+    "addedTables":   ["audit_log"],
+    "droppedTables": [],
+    "modified": [
+      {
+        "table":          "users",
+        "addedColumns":   ["deleted_at"],
+        "droppedColumns": [],
+        "typeChanges":    [],
+        "addedIndexes":   ["idx_users_deleted_at"],
+        "droppedIndexes": []
+      }
+    ]
+  }
 }
 ```
 
-### `NewDiffer` / `Watch` / `ChangesHandler`
+`diff` is omitted from the response until at least two polls have occurred (i.e. there is a before and after to compare). After that it is always present, even when empty.
+
+### Advanced: `ChangesHandler`
 
 ```go
-func NewDiffer(inspector Inspector) *Differ
-func (d *Differ) Snapshot(ctx context.Context) (SchemaSnapshot, error)
-func (d *Differ) Watch(ctx context.Context, interval time.Duration, onErr func(error))
-func (d *Differ) Diff() (SchemaDiff, bool)
 func ChangesHandler(d *Differ) http.HandlerFunc
 ```
 
-`Differ` tracks schema snapshots and exposes the diff between the last two. It persists the last non-empty diff — if the schema stabilizes after a migration, the changes remain visible until a new migration produces a fresh diff.
+For use-cases that need diff data outside the dashboard — scripts, CI health checks, other clients. Build a `Differ` manually and mount this handler wherever suits:
 
-`Watch` takes snapshots in the background on every tick until the context is cancelled.
+```go
+differ := watcher.NewDiffer(inspector)
+differ.Watch(context.Background(), 10*time.Second, nil)
 
-`ChangesHandler` exposes diffs over HTTP (JSON only):
-
-- `GET` — returns the latest `SchemaDiff`. Returns `{}` if fewer than two snapshots exist.
-- `POST` — takes a new snapshot, then returns the resulting diff.
-
-```json
-{
-  "before": "2024-01-01T00:00:00Z",
-  "after":  "2024-01-02T00:00:00Z",
-  "addedTables":   ["audit_log"],
-  "droppedTables": [],
-  "modified": [
-    {
-      "table":          "users",
-      "addedColumns":   ["deleted_at"],
-      "droppedColumns": [],
-      "typeChanges":    [{"column": "score", "before": "int", "after": "numeric"}],
-      "addedIndexes":   ["idx_users_deleted_at"],
-      "droppedIndexes": []
-    }
-  ]
-}
+http.HandleFunc("/api/schema/diff", watcher.ChangesHandler(differ))
 ```
+
+- `GET` — returns the current `SchemaDiff` as JSON.
+- `POST` — takes a new snapshot, returns the resulting diff.
 
 ---
 
 ## Testing
 
-Integration tests require Docker (Testcontainers).
-
 ```bash
-# Unit tests only
+# Unit tests
 go test ./...
 
-# Full integration tests (requires Docker)
+# Integration tests — requires Docker (Testcontainers, real Postgres and MySQL)
 go test -tags=integration -v ./...
 ```
 

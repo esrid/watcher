@@ -1175,14 +1175,16 @@ async function checkUpdates() {
     const json = await res.json();
     const newHash = JSON.stringify(json);
     if (newHash === activeDataHash) return;
+    activeDataHash = newHash;
     DATA.tables    = json.tables    || [];
     DATA.relations = json.relations || [];
-    activeDataHash = newHash;
+    DATA.diff      = json.diff      || null;
     if (selected && !DATA.tables.some(t => t.name === selected)) selected = null;
     render();
     updateHighlight();
     updateSearchCount();
     if (searchOpen) filterTables(document.getElementById('search-input').value);
+    if (activeView === 'changes') renderDiff(DATA.diff);
   } catch (e) {
     console.error('schema update error:', e);
   }
@@ -1213,7 +1215,7 @@ function switchView(view) {
 
   if (inChanges) {
     if (searchOpen) closeSearch();
-    pollChanges();
+    renderDiff(DATA.diff || null);
   } else {
     requestAnimationFrame(drawLines);
   }
@@ -1338,15 +1340,6 @@ function renderDiff(diff) {
   });
 }
 
-async function pollChanges() {
-  if (activeView !== 'changes') return;
-  try {
-    const res = await fetch('/changes', { headers: { Accept: 'application/json' } });
-    if (res.ok) renderDiff(await res.json());
-  } catch (_) {}
-}
-
-setInterval(() => { if (activeView === 'changes') pollChanges(); }, 3000);
 </script>
 </body>
 </html>
