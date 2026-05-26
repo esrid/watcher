@@ -245,7 +245,7 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 		}
 
 		var schDiff *SchemaDiff
-		if d, ok := differ.Diff(); ok {
+		if d, ok := differ.Diff(); ok && !d.Before.IsZero() {
 			schDiff = &d
 		}
 

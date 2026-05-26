@@ -81,6 +81,8 @@ func main() {
 
 The dashboard polls itself every 1.5 seconds. Each poll takes a schema snapshot, computes the diff from the previous state, and delivers both in a single response. The ERD updates live. The **Changes** tab shows diffs as soon as the schema changes — no second handler, no background goroutine, nothing else to configure.
 
+You can mount the handler on any path you want — `/`, `/_debug/schema`, `/internal/db`, anything. The dashboard automatically polls the path it is served from, so no configuration is needed on your side.
+
 ---
 
 ## Dashboard
