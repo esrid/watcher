@@ -211,6 +211,109 @@ func (s *PostgresSuite) TestRelations_MultipleFKs() {
 	}, rels)
 }
 
+func (s *PostgresSuite) TestIndexes_Postgres() {
+	s.exec(
+		`CREATE TABLE users_idx (
+			id SERIAL PRIMARY KEY,
+			email VARCHAR(200) NOT NULL,
+			first_name VARCHAR(100),
+			last_name VARCHAR(100),
+			active BOOLEAN DEFAULT TRUE
+		)`,
+		`CREATE UNIQUE INDEX idx_users_email ON users_idx(email)`,
+		`CREATE INDEX idx_users_name ON users_idx(last_name, first_name)`,
+		`CREATE INDEX idx_users_active ON users_idx(email) WHERE active = true`,
+	)
+
+	// Test no indexes case first
+	s.exec(`CREATE TABLE empty_idx (id SERIAL PRIMARY KEY)`)
+	emptyIdxs, err := s.insp.Indexes(context.Background(), "empty_idx")
+	s.Require().NoError(err)
+	s.Empty(emptyIdxs)
+
+	// Test rich indexes case
+	idxs, err := s.insp.Indexes(context.Background(), "users_idx")
+	s.Require().NoError(err)
+	s.Len(idxs, 3)
+
+	var idxEmail, idxName, idxActive *watcher.Index
+	for idx := range idxs {
+		switch idxs[idx].Name {
+		case "idx_users_email":
+			idxEmail = &idxs[idx]
+		case "idx_users_name":
+			idxName = &idxs[idx]
+		case "idx_users_active":
+			idxActive = &idxs[idx]
+		}
+	}
+
+	s.Require().NotNil(idxEmail)
+	s.True(idxEmail.Unique)
+	s.False(idxEmail.Partial)
+	s.Equal([]string{"email"}, idxEmail.Columns)
+
+	s.Require().NotNil(idxName)
+	s.False(idxName.Unique)
+	s.False(idxName.Partial)
+	s.Equal([]string{"last_name", "first_name"}, idxName.Columns)
+
+	s.Require().NotNil(idxActive)
+	s.False(idxActive.Unique)
+	s.True(idxActive.Partial)
+	s.Equal([]string{"email"}, idxActive.Columns)
+}
+
+func (s *PostgresSuite) TestColumnMeta_Postgres() {
+	s.exec(
+		`CREATE TABLE meta_test (
+			id SERIAL PRIMARY KEY,
+			email VARCHAR(200) UNIQUE NOT NULL,
+			bio TEXT DEFAULT 'n/a',
+			age INT
+		)`,
+	)
+
+	cols, err := s.insp.ColumnMeta(context.Background(), "meta_test")
+	s.Require().NoError(err)
+	s.Len(cols, 4)
+
+	var colID, colEmail, colBio, colAge *watcher.ColumnMeta
+	for idx := range cols {
+		switch cols[idx].Name {
+		case "id":
+			colID = &cols[idx]
+		case "email":
+			colEmail = &cols[idx]
+		case "bio":
+			colBio = &cols[idx]
+		case "age":
+			colAge = &cols[idx]
+		}
+	}
+
+	s.Require().NotNil(colID)
+	s.True(colID.PK)
+	s.True(colID.NotNull)
+	s.True(colID.Unique)
+
+	s.Require().NotNil(colEmail)
+	s.False(colEmail.PK)
+	s.True(colEmail.NotNull)
+	s.True(colEmail.Unique)
+
+	s.Require().NotNil(colBio)
+	s.False(colBio.PK)
+	s.False(colBio.NotNull)
+	s.Contains(colBio.Default, "n/a")
+
+	s.Require().NotNil(colAge)
+	s.False(colAge.PK)
+	s.False(colAge.NotNull)
+	s.Empty(colAge.Default)
+	s.False(colAge.Unique)
+}
+
 // --- helpers ---
 
 func (s *PostgresSuite) parseCols(raw []string) []col {
@@ -410,6 +513,100 @@ func (s *MySQLSuite) TestRelations_MultipleFKs() {
 		"customer_id -> customers.id",
 		"product_id -> products.id",
 	}, rels)
+}
+
+func (s *MySQLSuite) TestIndexes_MySQL() {
+	s.exec(
+		`CREATE TABLE users_idx (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			email VARCHAR(200) NOT NULL,
+			first_name VARCHAR(100),
+			last_name VARCHAR(100),
+			active BOOLEAN DEFAULT TRUE
+		) ENGINE=InnoDB`,
+		`CREATE UNIQUE INDEX idx_users_email ON users_idx(email)`,
+		`CREATE INDEX idx_users_name ON users_idx(last_name, first_name)`,
+	)
+
+	// Test no indexes case first
+	s.exec(`CREATE TABLE empty_idx (id INT AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB`)
+	emptyIdxs, err := s.insp.Indexes(context.Background(), "empty_idx")
+	s.Require().NoError(err)
+	s.Empty(emptyIdxs)
+
+	// Test rich indexes case
+	idxs, err := s.insp.Indexes(context.Background(), "users_idx")
+	s.Require().NoError(err)
+	s.Len(idxs, 2)
+
+	var idxEmail, idxName *watcher.Index
+	for idx := range idxs {
+		switch idxs[idx].Name {
+		case "idx_users_email":
+			idxEmail = &idxs[idx]
+		case "idx_users_name":
+			idxName = &idxs[idx]
+		}
+	}
+
+	s.Require().NotNil(idxEmail)
+	s.True(idxEmail.Unique)
+	s.False(idxEmail.Partial)
+	s.Equal([]string{"email"}, idxEmail.Columns)
+
+	s.Require().NotNil(idxName)
+	s.False(idxName.Unique)
+	s.False(idxName.Partial)
+	s.Equal([]string{"last_name", "first_name"}, idxName.Columns)
+}
+
+func (s *MySQLSuite) TestColumnMeta_MySQL() {
+	s.exec(
+		`CREATE TABLE meta_test (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			email VARCHAR(200) UNIQUE NOT NULL,
+			bio TEXT,
+			age INT
+		) ENGINE=InnoDB`,
+	)
+
+	cols, err := s.insp.ColumnMeta(context.Background(), "meta_test")
+	s.Require().NoError(err)
+	s.Len(cols, 4)
+
+	var colID, colEmail, colBio, colAge *watcher.ColumnMeta
+	for idx := range cols {
+		switch cols[idx].Name {
+		case "id":
+			colID = &cols[idx]
+		case "email":
+			colEmail = &cols[idx]
+		case "bio":
+			colBio = &cols[idx]
+		case "age":
+			colAge = &cols[idx]
+		}
+	}
+
+	s.Require().NotNil(colID)
+	s.True(colID.PK)
+	s.True(colID.NotNull)
+	s.True(colID.Unique)
+
+	s.Require().NotNil(colEmail)
+	s.False(colEmail.PK)
+	s.True(colEmail.NotNull)
+	s.True(colEmail.Unique)
+
+	s.Require().NotNil(colBio)
+	s.False(colBio.PK)
+	s.False(colBio.NotNull)
+
+	s.Require().NotNil(colAge)
+	s.False(colAge.PK)
+	s.False(colAge.NotNull)
+	s.Empty(colAge.Default)
+	s.False(colAge.Unique)
 }
 
 // --- helpers ---

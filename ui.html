@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,33 +15,40 @@
 
 :root {
   color-scheme: dark light;
-  --bg:           light-dark(#fafafa,      #09090b);
-  --bg-dot:       light-dark(rgba(0,0,0,.05), rgba(255,255,255,.04));
-  --text:         light-dark(#18181b,      #e4e4e7);
-  --card-bg:      light-dark(#ffffff,      #111113);
-  --card-border:  light-dark(#e4e4e7,      #27272a);
-  --card-drag-border: light-dark(#d4d4d8,  #3f3f46);
-  --card-conn-border: light-dark(#a1a1aa,  #52525b);
-  --header-bg:    light-dark(#f4f4f5,      #18181b);
-  --header-text:  light-dark(#09090b,      #f4f4f5);
-  --header-dot:   light-dark(#d4d4d8,      #3f3f46);
-  --col-border:   light-dark(#f0f0f0,      #1c1c1f);
-  --col-name:     light-dark(#3f3f46,      #d4d4d8);
-  --col-type:     light-dark(#a1a1aa,      #52525b);
-  --muted:        light-dark(#a1a1aa,      #3f3f46);
-  --ui-bg:        light-dark(#ffffff,      #111113);
-  --ui-border:    light-dark(#e4e4e7,      #27272a);
-  --ui-text:      light-dark(#71717a,      #a1a1aa);
-  --ui-hover-bg:  light-dark(#f4f4f5,      #18181b);
-  --ui-hover-bdr: light-dark(#d4d4d8,      #3f3f46);
-  --ui-hover-txt: light-dark(#18181b,      #e4e4e7);
-  --ui-active-bg: light-dark(#e4e4e7,      #27272a);
-  --line-dim:     light-dark(#d4d4d8,      #27272a);
-  --line-def:     light-dark(#a1a1aa,      #3f3f46);
-  --dot-def:      light-dark(#c4c4c8,      #52525b);
-  --shadow-card:  light-dark(rgba(0,0,0,.08), rgba(0,0,0,.5));
-  --shadow-drag:  light-dark(rgba(0,0,0,.18), rgba(0,0,0,.8));
-  --shadow-sel:   light-dark(rgba(0,0,0,.12), rgba(0,0,0,.6));
+  --bg:            light-dark(#fafafa,       #09090b);
+  --bg-dot:        light-dark(rgba(0,0,0,.05),rgba(255,255,255,.04));
+  --text:          light-dark(#18181b,       #e4e4e7);
+  --card-bg:       light-dark(#ffffff,       #111113);
+  --card-border:   light-dark(#e4e4e7,       #27272a);
+  --card-drag-bd:  light-dark(#d4d4d8,       #3f3f46);
+  --card-conn-bd:  light-dark(#a1a1aa,       #52525b);
+  --header-bg:     light-dark(#f4f4f5,       #18181b);
+  --header-text:   light-dark(#09090b,       #f4f4f5);
+  --header-dot:    light-dark(#d4d4d8,       #3f3f46);
+  --col-border:    light-dark(#f0f0f0,       #1c1c1f);
+  --col-name:      light-dark(#3f3f46,       #d4d4d8);
+  --col-type:      light-dark(#a1a1aa,       #52525b);
+  --muted:         light-dark(#a1a1aa,       #3f3f46);
+  --ui-bg:         light-dark(#ffffff,       #111113);
+  --ui-border:     light-dark(#e4e4e7,       #27272a);
+  --ui-text:       light-dark(#71717a,       #a1a1aa);
+  --ui-hover-bg:   light-dark(#f4f4f5,       #18181b);
+  --ui-hover-bdr:  light-dark(#d4d4d8,       #3f3f46);
+  --ui-hover-txt:  light-dark(#18181b,       #e4e4e7);
+  --ui-active-bg:  light-dark(#e4e4e7,       #27272a);
+  --line-dim:      light-dark(#d4d4d8,       #27272a);
+  --line-def:      light-dark(#a1a1aa,       #3f3f46);
+  --dot-def:       light-dark(#c4c4c8,       #52525b);
+  --shadow-card:   light-dark(rgba(0,0,0,.08),rgba(0,0,0,.5));
+  --shadow-drag:   light-dark(rgba(0,0,0,.18),rgba(0,0,0,.8));
+  --shadow-sel:    light-dark(rgba(0,0,0,.12),rgba(0,0,0,.6));
+  --idx-bg:        light-dark(#f8f8fa,       #0c0c0e);
+  --idx-border:    light-dark(#ececef,       #1c1c1f);
+  --idx-text:      light-dark(#71717a,       #52525b);
+  --search-bg:     light-dark(rgba(252,252,253,.95),rgba(14,14,16,.92));
+  --search-bd:     light-dark(rgba(0,0,0,.07),rgba(255,255,255,.09));
+  --search-sh:     light-dark(rgba(0,0,0,.13),rgba(0,0,0,.65));
+  --backdrop:      light-dark(rgba(0,0,0,.1), rgba(0,0,0,.42));
 }
 
 body {
@@ -56,12 +63,7 @@ body {
   user-select: none;
 }
 
-#lines {
-  position: absolute;
-  top: 0; left: 0;
-  pointer-events: none;
-  z-index: 0;
-}
+#lines { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; }
 
 #canvas {
   position: relative;
@@ -71,37 +73,27 @@ body {
   transition: transform 0.15s ease;
 }
 
+/* ── Cards ───────────────────────────────────────────────── */
 .card {
   position: absolute;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 8px;
   overflow: hidden;
-  width: 220px;
+  width: 240px;
   box-shadow: 0 2px 20px var(--shadow-card);
   z-index: 1;
-  transition: box-shadow 0.15s, border-color 0.15s;
+  transition: box-shadow .15s, border-color .15s, opacity .15s;
 }
+.card.dragging  { box-shadow: 0 8px 40px var(--shadow-drag); border-color: var(--card-drag-bd); z-index: 100; }
+.card.selected  { border-color: #a78bfa; box-shadow: 0 0 0 1px rgba(167,139,250,.2), 0 4px 24px var(--shadow-sel); }
+.card.connected { border-color: var(--card-conn-bd); }
+.card.dimmed    { opacity: 0.2; }
+.card.search-hidden { opacity: 0; pointer-events: none; }
 
-.card.dragging {
-  box-shadow: 0 8px 40px var(--shadow-drag);
-  border-color: var(--card-drag-border);
-  z-index: 100;
-}
-.card.selected {
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 1px rgba(167,139,250,.2), 0 4px 24px var(--shadow-sel);
-}
-.card.connected {
-  border-color: var(--card-conn-border);
-}
-.card.dimmed {
-  opacity: 0.25;
-  transition: opacity 0.15s;
-}
-
+/* ── Header ──────────────────────────────────────────────── */
 .card-header {
-  padding: 8px 12px;
+  padding: 8px 10px 8px 12px;
   background: var(--header-bg);
   border-bottom: 1px solid var(--card-border);
   display: flex;
@@ -111,29 +103,41 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--header-text);
-  letter-spacing: 0.01em;
+  letter-spacing: .01em;
   cursor: grab;
 }
-
 .card-header:active { cursor: grabbing; }
-
-.card-header-dot {
-  width: 6px; height: 6px;
-  background: var(--header-dot);
-  border-radius: 50%;
-  flex-shrink: 0;
+.card-header-dot  { width: 6px; height: 6px; background: var(--header-dot); border-radius: 50%; flex-shrink: 0; }
+.card-header-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-chevron {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 9px; flex-shrink: 0;
+  transition: transform .22s cubic-bezier(.4,0,.2,1), color .12s;
+  border-radius: 3px;
 }
+.card-header:hover .card-chevron { color: var(--ui-hover-txt); }
+.card.collapsed .card-chevron { transform: rotate(-90deg); }
 
+/* ── Body (collapsible) ──────────────────────────────────── */
+.card-body {
+  overflow: hidden;
+  max-height: 1400px;
+  transition: max-height .28s cubic-bezier(.4,0,.2,1);
+}
+.card.collapsed .card-body { max-height: 0; }
+
+/* ── Columns ─────────────────────────────────────────────── */
 .col {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 4px;
   padding: 5px 12px;
   border-bottom: 1px solid var(--col-border);
   font-size: 12px;
+  transition: background .1s;
 }
 .col:last-child { border-bottom: none; }
-
 .col-name {
   flex: 1;
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -142,6 +146,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 .col.pk .col-name { color: #c4b5fd; }
 .col.fk .col-name { color: #fdba74; }
@@ -151,107 +156,249 @@ body {
   font-size: 11px;
   color: var(--col-type);
   white-space: nowrap;
-}
-
-.badge {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 3px;
-  letter-spacing: 0.05em;
-  font-family: ui-monospace, monospace;
   flex-shrink: 0;
 }
-.badge-pk { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
-.badge-fk { background: rgba(251,146,60,.10); color: #fb923c;  border: 1px solid rgba(251,146,60,.22); }
-
-.dot-live {
-  position: fixed;
-  bottom: 16px; right: 16px;
-  font-size: 10px;
+.col-null {
   font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+  opacity: .75;
+  line-height: 1;
+}
+.col-default {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+  max-width: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .6;
+}
+
+/* column active highlight */
+.col.col-lit-src { background: rgba(251,146,60,.08); box-shadow: inset 3px 0 0 #fb923c; }
+.col.col-lit-tgt { background: rgba(167,139,250,.08); box-shadow: inset 3px 0 0 #a78bfa; }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge {
+  font-size: 9px; font-weight: 700;
+  padding: 1px 4px; border-radius: 3px;
+  letter-spacing: .05em;
+  font-family: ui-monospace, monospace;
+  flex-shrink: 0; line-height: 1.5;
+}
+.badge-pk  { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
+.badge-fk  { background: rgba(251,146,60,.10);  color: #fb923c; border: 1px solid rgba(251,146,60,.22); }
+.badge-uq  { background: rgba(99,102,241,.10);  color: #818cf8; border: 1px solid rgba(99,102,241,.22); }
+
+/* ── Indexes section ─────────────────────────────────────── */
+.card-indexes { border-top: 1px solid var(--idx-border); background: var(--idx-bg); }
+
+.card-indexes-hdr {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: ui-monospace, monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  color: var(--idx-text);
+  transition: color .12s;
+}
+.card-indexes-hdr:hover { color: var(--ui-hover-txt); }
+.idx-hdr-count { opacity: .7; font-weight: 400; }
+.idx-chevron   { margin-left: auto; font-size: 8px; transition: transform .2s; }
+.card-indexes.open .idx-chevron { transform: rotate(180deg); }
+
+.card-indexes-list {
+  overflow: hidden; max-height: 0;
+  transition: max-height .2s ease;
+}
+.card-indexes.open .card-indexes-list { max-height: 500px; }
+
+.idx-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--idx-border);
+  font-size: 11px;
+}
+.idx-row:last-child { padding-bottom: 6px; }
+.idx-name {
+  flex: 1; min-width: 0;
+  font-family: ui-monospace, monospace;
+  color: var(--col-name); font-size: 11px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.idx-cols {
+  font-family: ui-monospace, monospace;
+  font-size: 10px; color: var(--col-type);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 80px;
+}
+.badge-uq-idx { background: rgba(99,102,241,.08);  color: #818cf8; border: 1px solid rgba(99,102,241,.18); }
+.badge-partial { background: rgba(234,179,8,.08);  color: #ca8a04; border: 1px solid rgba(234,179,8,.18); }
+
+/* ── Animated flow paths ─────────────────────────────────── */
+@keyframes flowDash {
+  to { stroke-dashoffset: -24; }
+}
+.flow-path {
+  stroke-dasharray: 8 5;
+  animation: flowDash .9s linear infinite;
+}
+
+/* ── Search overlay ──────────────────────────────────────── */
+.search-overlay {
+  position: fixed; inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+}
+.search-overlay.open { pointer-events: auto; }
+
+.search-backdrop {
+  position: absolute; inset: 0;
+  background: var(--backdrop);
+  opacity: 0;
+  transition: opacity .18s;
+}
+.search-overlay.open .search-backdrop { opacity: 1; }
+
+.search-box {
+  position: relative; z-index: 1;
+  width: 500px; max-width: calc(100vw - 32px);
+  background: var(--search-bg);
+  border: 1px solid var(--search-bd);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-radius: 16px;
+  box-shadow: 0 32px 80px var(--search-sh), 0 2px 8px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.06);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-14px) scale(0.97);
+  transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
+}
+.search-overlay.open .search-box {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.search-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+}
+.search-icon { color: var(--col-type); flex-shrink: 0; display: flex; }
+.search-input {
+  flex: 1; min-width: 0;
+  background: none; border: none; outline: none;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  caret-color: #a78bfa;
+}
+.search-input::placeholder { color: var(--col-type); }
+.search-kbd {
+  font-size: 10px; font-family: ui-monospace, monospace;
+  color: var(--col-type);
+  background: var(--ui-hover-bg); border: 1px solid var(--ui-border);
+  border-radius: 4px; padding: 2px 7px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.search-footer {
+  border-top: 1px solid var(--idx-border);
+  padding: 9px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.search-count { font-size: 11px; font-family: ui-monospace, monospace; color: var(--col-type); }
+.search-hint  { font-size: 10px; font-family: ui-monospace, monospace; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.search-hint kbd {
+  background: var(--ui-hover-bg); border: 1px solid var(--ui-border);
+  border-radius: 3px; padding: 1px 5px;
+  font-family: ui-monospace, monospace; font-size: 10px;
+}
+
+/* ── Search trigger pill ─────────────────────────────────── */
+.search-pill {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px 5px 10px;
+  background: var(--ui-bg); border: 1px solid var(--ui-border);
+  border-radius: 99px; cursor: pointer; z-index: 200;
   color: var(--ui-text);
-  background: var(--ui-bg);
+  font-size: 12px; font-family: ui-monospace, monospace;
+  transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  white-space: nowrap;
+}
+.search-pill:hover {
+  background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr);
+  color: var(--ui-hover-txt); box-shadow: 0 2px 12px rgba(0,0,0,.1);
+}
+.search-pill-label { color: var(--muted); }
+.search-pill kbd {
+  font-size: 10px; font-family: ui-monospace, monospace;
+  color: var(--col-type);
+  background: var(--ui-hover-bg); border: 1px solid var(--ui-border);
+  border-radius: 3px; padding: 1px 5px;
+}
+
+/* ── Bottom / fixed UI ───────────────────────────────────── */
+.dot-live {
+  position: fixed; bottom: 16px; right: 16px;
+  font-size: 10px; font-family: ui-monospace, monospace;
+  color: var(--ui-text); background: var(--ui-bg);
   border: 1px solid var(--ui-border);
-  padding: 3px 8px;
-  border-radius: 99px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  padding: 3px 8px; border-radius: 99px;
+  display: flex; align-items: center; gap: 5px;
   z-index: 200;
 }
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px rgba(34,197,94,.5); }
-  50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 10px rgba(34,197,94,.8); }
-  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 5px rgba(34,197,94,.5); }
+  0%,100% { transform: scale(1);   opacity: 1;   box-shadow: 0 0 5px rgba(34,197,94,.5); }
+  50%      { transform: scale(1.3); opacity: .8; box-shadow: 0 0 10px rgba(34,197,94,.8); }
 }
 .dot-live::before {
   content: '';
   width: 5px; height: 5px;
-  background: #22c55e;
-  border-radius: 50%;
+  background: #22c55e; border-radius: 50%;
   box-shadow: 0 0 5px rgba(34,197,94,.5);
   animation: pulse 2s infinite ease-in-out;
 }
-
 .empty {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  color: var(--muted);
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
+  color: var(--muted); font-family: ui-monospace, monospace; font-size: 13px;
 }
-
 .zoom-controls {
-  position: fixed;
-  bottom: 16px; left: 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  z-index: 200;
+  position: fixed; bottom: 16px; left: 16px;
+  display: flex; align-items: center; gap: 4px; z-index: 200;
 }
 .zoom-btn {
   width: 28px; height: 28px;
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border);
-  border-radius: 6px;
-  color: var(--ui-text);
-  font-size: 14px;
-  font-family: ui-monospace, monospace;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  background: var(--ui-bg); border: 1px solid var(--ui-border);
+  border-radius: 6px; color: var(--ui-text);
+  font-size: 14px; font-family: ui-monospace, monospace;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.zoom-btn:hover { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
+.zoom-btn:hover  { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
 .zoom-btn:active { background: var(--ui-active-bg); }
 .zoom-level {
-  font-size: 10px;
-  font-family: ui-monospace, monospace;
-  color: var(--col-type);
-  min-width: 38px;
-  text-align: center;
-  user-select: none;
+  font-size: 10px; font-family: ui-monospace, monospace;
+  color: var(--col-type); min-width: 38px; text-align: center; user-select: none;
 }
-
 .theme-btn {
-  position: fixed;
-  top: 12px; right: 12px;
+  position: fixed; top: 12px; right: 12px;
   width: 28px; height: 28px;
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border);
-  border-radius: 6px;
-  color: var(--ui-text);
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--ui-bg); border: 1px solid var(--ui-border);
+  border-radius: 6px; color: var(--ui-text); font-size: 13px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
   z-index: 200;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.theme-btn:hover { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
+.theme-btn:hover  { background: var(--ui-hover-bg); border-color: var(--ui-hover-bdr); color: var(--ui-hover-txt); }
 .theme-btn:active { background: var(--ui-active-bg); }
 </style>
 </head>
@@ -260,43 +407,76 @@ body {
 <div id="canvas"></div>
 <div class="dot-live">live schema</div>
 <button class="theme-btn" id="theme-toggle" title="Toggle light/dark mode">◑</button>
+
+<!-- Search trigger pill -->
+<button class="search-pill" id="search-pill" title="Search tables (⌘K or /)">
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
+    <line x1="7.5" y1="7.5" x2="10" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>
+  <span class="search-pill-label">Search tables…</span>
+  <kbd>⌘K</kbd>
+</button>
+
+<!-- Search overlay -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-backdrop" id="search-backdrop"></div>
+  <div class="search-box">
+    <div class="search-row">
+      <span class="search-icon">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="10.5" y1="10.5" x2="13" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <input class="search-input" id="search-input" type="text" placeholder="Search tables…" autocomplete="off" spellcheck="false">
+      <kbd class="search-kbd">esc</kbd>
+    </div>
+    <div class="search-footer">
+      <span class="search-count" id="search-count">— tables</span>
+      <span class="search-hint">Close <kbd>esc</kbd></span>
+    </div>
+  </div>
+</div>
+
 <div class="zoom-controls">
-  <button class="zoom-btn" id="zoom-out" title="Zoom out (Ctrl + -)">&minus;</button>
+  <button class="zoom-btn" id="zoom-out" title="Zoom out (Ctrl−)">&minus;</button>
   <span class="zoom-level" id="zoom-level">100%</span>
-  <button class="zoom-btn" id="zoom-in" title="Zoom in (Ctrl + +)">+</button>
-  <button class="zoom-btn" id="zoom-reset" title="Reset zoom (Ctrl + 0)" style="font-size:10px;width:auto;padding:0 6px;">⟲</button>
+  <button class="zoom-btn" id="zoom-in" title="Zoom in (Ctrl+)">+</button>
+  <button class="zoom-btn" id="zoom-reset" title="Reset zoom (Ctrl+0)" style="font-size:10px;width:auto;padding:0 6px;">⟲</button>
 </div>
 
 <script>
 const DATA = {{ .JSON }};
 
 const PAD  = 48;
-const COLW = 248;
-const ROWH = 260;
+const COLW = 268;
+const ROWH = 300;
 
 let zoomLevel = 1;
-const ZOOM_MIN = 0.25;
-const ZOOM_MAX = 2;
+const ZOOM_MIN  = 0.25;
+const ZOOM_MAX  = 2;
 const ZOOM_STEP = 0.1;
 
-let selected = null;
+let selected    = null;
+let searchOpen  = false;
 
+// ── Helpers ───────────────────────────────────────────────
 function cid(table, col) {
   return 'c_' + (table + '__' + col).replace(/\W/g, '_');
 }
 
 function absRect(el) {
   const r = el.getBoundingClientRect();
-  // Account for zoom transform on canvas
   const top  = (r.top  + scrollY) / zoomLevel;
   const left = (r.left + scrollX) / zoomLevel;
   return { top, left, right: left + r.width / zoomLevel, bottom: top + r.height / zoomLevel, w: r.width / zoomLevel, h: r.height / zoomLevel };
 }
 
+// ── SVG ───────────────────────────────────────────────────
 function resizeSVG() {
-  const cards = document.querySelectorAll('.card');
   let maxR = 0, maxB = 0;
-  cards.forEach(c => {
+  document.querySelectorAll('.card').forEach(c => {
     maxR = Math.max(maxR, c.offsetLeft + c.offsetWidth);
     maxB = Math.max(maxB, c.offsetTop  + c.offsetHeight);
   });
@@ -310,20 +490,35 @@ function drawLines() {
   const svg = document.getElementById('lines');
   svg.innerHTML = '';
 
+  const cs      = getComputedStyle(document.documentElement);
+  const lineDim = cs.getPropertyValue('--line-dim').trim();
+  const lineDef = cs.getPropertyValue('--line-def').trim();
+  const dotDef  = cs.getPropertyValue('--dot-def').trim();
+
   (DATA.relations || []).forEach(rel => {
-    const srcEl = document.getElementById(cid(rel.src,  rel.srcCol));
+    const srcEl = document.getElementById(cid(rel.src, rel.srcCol));
     const tgtEl = document.getElementById(cid(rel.tgt, rel.tgtCol));
     if (!srcEl || !tgtEl) return;
 
-    const sr = absRect(srcEl);
-    const tr = absRect(tgtEl);
-    const sc = absRect(srcEl.closest('.card'));
-    const tc = absRect(tgtEl.closest('.card'));
+    const srcCard = srcEl.closest('.card');
+    const tgtCard = tgtEl.closest('.card');
+    if (!srcCard || !tgtCard) return;
+    if (srcCard.classList.contains('search-hidden') || tgtCard.classList.contains('search-hidden')) return;
 
-    const y1 = sr.top + sr.h / 2;
-    const y2 = tr.top + tr.h / 2;
+    const sc = absRect(srcCard);
+    const tc = absRect(tgtCard);
+
+    // For y: use column element position unless card is collapsed (use header center)
+    const srcCollapsed = srcCard.classList.contains('collapsed');
+    const tgtCollapsed = tgtCard.classList.contains('collapsed');
+    const y1 = srcCollapsed
+      ? absRect(srcCard.querySelector('.card-header')).top + absRect(srcCard.querySelector('.card-header')).h / 2
+      : absRect(srcEl).top + absRect(srcEl).h / 2;
+    const y2 = tgtCollapsed
+      ? absRect(tgtCard.querySelector('.card-header')).top + absRect(tgtCard.querySelector('.card-header')).h / 2
+      : absRect(tgtEl).top + absRect(tgtEl).h / 2;
+
     let x1, x2, s;
-
     if (sc.left <= tc.left) { x1 = sc.right; x2 = tc.left;  s =  1; }
     else                     { x1 = sc.left;  x2 = tc.right; s = -1; }
 
@@ -331,11 +526,6 @@ function drawLines() {
     const isTarget = selected === rel.tgt;
     const lit      = isSource || isTarget;
     const faded    = selected && !lit;
-
-    const cs       = getComputedStyle(document.documentElement);
-    const lineDim  = cs.getPropertyValue('--line-dim').trim();
-    const lineDef  = cs.getPropertyValue('--line-def').trim();
-    const dotDef   = cs.getPropertyValue('--dot-def').trim();
 
     const stroke = faded ? lineDim : lit ? (isSource ? '#fb923c' : '#a78bfa') : lineDef;
     const sw     = lit ? '2' : '1.5';
@@ -347,28 +537,47 @@ function drawLines() {
     path.setAttribute('stroke', stroke);
     path.setAttribute('stroke-width', sw);
     path.setAttribute('fill', 'none');
+    if (lit) path.classList.add('flow-path');
     svg.appendChild(path);
 
     const dotColor = faded ? lineDim : lit ? stroke : dotDef;
+    const dotR     = lit ? '3' : '2.5';
     [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
-      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('cx', cx); c.setAttribute('cy', cy);
-      c.setAttribute('r', '2.5'); c.setAttribute('fill', dotColor);
-      svg.appendChild(c);
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+      dot.setAttribute('r', dotR); dot.setAttribute('fill', dotColor);
+      svg.appendChild(dot);
     });
   });
 }
 
+// ── Selection + column highlights ────────────────────────
+function clearColHighlights() {
+  document.querySelectorAll('.col-lit-src,.col-lit-tgt').forEach(el => {
+    el.classList.remove('col-lit-src', 'col-lit-tgt');
+  });
+}
+
 function updateHighlight() {
+  clearColHighlights();
   if (!selected) {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('selected', 'connected', 'dimmed'));
     return;
   }
+
   const connected = new Set();
   (DATA.relations || []).forEach(rel => {
-    if (rel.src === selected) connected.add(rel.tgt);
-    if (rel.tgt === selected) connected.add(rel.src);
+    const isSrc = rel.src === selected;
+    const isTgt = rel.tgt === selected;
+    if (!isSrc && !isTgt) return;
+    if (isSrc) connected.add(rel.tgt);
+    if (isTgt) connected.add(rel.src);
+    const srcColEl = document.getElementById(cid(rel.src, rel.srcCol));
+    const tgtColEl = document.getElementById(cid(rel.tgt, rel.tgtCol));
+    if (srcColEl) srcColEl.classList.add('col-lit-src');
+    if (tgtColEl) tgtColEl.classList.add('col-lit-tgt');
   });
+
   document.querySelectorAll('.card').forEach(c => {
     const n = c.dataset.table;
     c.classList.toggle('selected',   n === selected);
@@ -383,8 +592,16 @@ function select(name) {
   requestAnimationFrame(drawLines);
 }
 
+// ── Collapse ──────────────────────────────────────────────
+function toggleCollapse(card) {
+  const isNowCollapsed = card.classList.toggle('collapsed');
+  localStorage.setItem('watcher_collapsed_' + card.dataset.table, isNowCollapsed ? '1' : '');
+  requestAnimationFrame(drawLines);
+}
+
+// ── Drag ──────────────────────────────────────────────────
 function makeDraggable(card, hdr) {
-  let ox = 0, oy = 0, startX = 0, startY = 0, dragged = false;
+  let ox = 0, oy = 0, startX = 0, startY = 0, dragged = false, lastUp = 0;
 
   hdr.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -407,17 +624,78 @@ function makeDraggable(card, hdr) {
 
   hdr.addEventListener('pointerup', () => {
     card.classList.remove('dragging');
-    if (!dragged) {
-      select(card.dataset.table);
-    } else {
+    if (dragged) {
       localStorage.setItem('watcher_pos_' + card.dataset.table, JSON.stringify({
-        left: card.style.left,
-        top: card.style.top
+        left: card.style.left, top: card.style.top,
       }));
+      return;
+    }
+    const now = Date.now();
+    if (now - lastUp < 280) {
+      // Double-click: undo the previous select toggle, then collapse
+      select(card.dataset.table); // restore selection state
+      toggleCollapse(card);
+      lastUp = 0;
+    } else {
+      lastUp = now;
+      select(card.dataset.table);
     }
   });
 }
 
+// ── Search ────────────────────────────────────────────────
+function openSearch() {
+  if (searchOpen) return;
+  searchOpen = true;
+  document.getElementById('search-overlay').classList.add('open');
+  document.getElementById('search-pill').style.visibility = 'hidden';
+  const inp = document.getElementById('search-input');
+  inp.focus();
+  updateSearchCount();
+}
+
+function closeSearch() {
+  if (!searchOpen) return;
+  searchOpen = false;
+  document.getElementById('search-overlay').classList.remove('open');
+  document.getElementById('search-pill').style.visibility = '';
+  document.getElementById('search-input').value = '';
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('search-hidden'));
+  updateSearchCount();
+  requestAnimationFrame(drawLines);
+}
+
+function filterTables(q) {
+  const query = q.trim().toLowerCase();
+  const total = (DATA.tables || []).length;
+  let visible = 0;
+  document.querySelectorAll('.card').forEach(c => {
+    const hide = query.length > 0 && !c.dataset.table.toLowerCase().includes(query);
+    c.classList.toggle('search-hidden', hide);
+    if (!hide) visible++;
+  });
+  updateSearchCount(visible, total, query);
+  requestAnimationFrame(drawLines);
+}
+
+function updateSearchCount(visible, total, query) {
+  const el = document.getElementById('search-count');
+  if (!el) return;
+  const t = total ?? (DATA.tables || []).length;
+  if (!query) {
+    el.textContent = t + ' table' + (t !== 1 ? 's' : '');
+  } else if (visible === 0) {
+    el.textContent = 'No tables found';
+  } else {
+    el.textContent = visible + ' / ' + t + ' table' + (t !== 1 ? 's' : '');
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', e => filterTables(e.target.value));
+document.getElementById('search-backdrop').addEventListener('click', closeSearch);
+document.getElementById('search-pill').addEventListener('click', openSearch);
+
+// ── Render ────────────────────────────────────────────────
 function render() {
   const canvas = document.getElementById('canvas');
   canvas.innerHTML = '';
@@ -439,48 +717,156 @@ function render() {
     card.className = 'card';
     card.dataset.table = t.name;
 
+    // Position — saved or grid
     const saved = localStorage.getItem('watcher_pos_' + t.name);
+    let placed = false;
     if (saved) {
       try {
         const pos = JSON.parse(saved);
         card.style.left = pos.left;
         card.style.top  = pos.top;
-      } catch (e) {
-        card.style.left = (PAD + (i % cols) * COLW) + 'px';
-        card.style.top  = (PAD + Math.floor(i / cols) * ROWH) + 'px';
-      }
-    } else {
+        placed = true;
+      } catch (_) {}
+    }
+    if (!placed) {
       card.style.left = (PAD + (i % cols) * COLW) + 'px';
       card.style.top  = (PAD + Math.floor(i / cols) * ROWH) + 'px';
     }
 
+    if (localStorage.getItem('watcher_collapsed_' + t.name) === '1') {
+      card.classList.add('collapsed');
+    }
+
+    // ── Header
     const hdr = document.createElement('div');
     hdr.className = 'card-header';
+
     const dot = document.createElement('span');
     dot.className = 'card-header-dot';
-    hdr.appendChild(dot);
-    hdr.appendChild(document.createTextNode(t.name));
+
+    const nm = document.createElement('span');
+    nm.className = 'card-header-name';
+    nm.textContent = t.name;
+
+    const chev = document.createElement('span');
+    chev.className = 'card-chevron';
+    chev.innerHTML = '&#9660;'; // ▼
+    chev.title = 'Double-click to collapse';
+
+    hdr.append(dot, nm, chev);
     card.appendChild(hdr);
 
+    // ── Body
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    // Columns
     (t.cols || []).forEach(col => {
       const row = document.createElement('div');
       row.className = 'col' + (col.pk ? ' pk' : col.fk ? ' fk' : '');
       row.id = cid(t.name, col.name);
 
+      // PK / FK badge
       if (col.pk || col.fk) {
         const b = document.createElement('span');
         b.className = 'badge ' + (col.pk ? 'badge-pk' : 'badge-fk');
         b.textContent = col.pk ? 'PK' : 'FK';
         row.appendChild(b);
       }
+      // UQ badge — only when column has unique constraint and is not PK
+      if (col.unique && !col.pk) {
+        const b = document.createElement('span');
+        b.className = 'badge badge-uq';
+        b.textContent = 'UQ';
+        row.appendChild(b);
+      }
 
-      const nm = document.createElement('span'); nm.className = 'col-name'; nm.textContent = col.name;
-      const tp = document.createElement('span'); tp.className = 'col-type'; tp.textContent = col.type;
-      row.appendChild(nm);
+      const colName = document.createElement('span');
+      colName.className = 'col-name';
+      colName.textContent = col.name;
+      row.appendChild(colName);
+
+      // Nullable indicator: show '?' only for explicitly nullable columns
+      if (col.notNull === false) {
+        const nl = document.createElement('span');
+        nl.className = 'col-null';
+        nl.textContent = '?';
+        nl.title = 'Nullable';
+        row.appendChild(nl);
+      }
+
+      const tp = document.createElement('span');
+      tp.className = 'col-type';
+      tp.textContent = col.type;
       row.appendChild(tp);
-      card.appendChild(row);
+
+      // Default value
+      if (col.default && col.default.length > 0) {
+        const df = document.createElement('span');
+        df.className = 'col-default';
+        df.textContent = '=' + (col.default.length > 12 ? col.default.slice(0, 11) + '…' : col.default);
+        df.title = 'Default: ' + col.default;
+        row.appendChild(df);
+      }
+
+      body.appendChild(row);
     });
 
+    // Indexes section
+    const indexes = t.indexes || [];
+    if (indexes.length > 0) {
+      const section = document.createElement('div');
+      section.className = 'card-indexes';
+
+      const idxHdr = document.createElement('div');
+      idxHdr.className = 'card-indexes-hdr';
+      idxHdr.innerHTML =
+        `Indexes <span class="idx-hdr-count">(${indexes.length})</span>` +
+        `<span class="idx-chevron">&#9660;</span>`;
+
+      const list = document.createElement('div');
+      list.className = 'card-indexes-list';
+
+      indexes.forEach(idx => {
+        const row = document.createElement('div');
+        row.className = 'idx-row';
+
+        const idxName = document.createElement('span');
+        idxName.className = 'idx-name';
+        idxName.textContent = idx.name;
+        idxName.title = idx.name;
+        row.appendChild(idxName);
+
+        if (idx.unique) {
+          const b = document.createElement('span');
+          b.className = 'badge badge-uq-idx';
+          b.textContent = 'UQ';
+          row.appendChild(b);
+        }
+        if (idx.partial) {
+          const b = document.createElement('span');
+          b.className = 'badge badge-partial';
+          b.textContent = '~';
+          b.title = 'Partial index';
+          row.appendChild(b);
+        }
+
+        const colsStr = (idx.columns || []).join(', ');
+        const idxCols = document.createElement('span');
+        idxCols.className = 'idx-cols';
+        idxCols.textContent = colsStr;
+        idxCols.title = colsStr;
+        row.appendChild(idxCols);
+
+        list.appendChild(row);
+      });
+
+      idxHdr.addEventListener('click', () => section.classList.toggle('open'));
+      section.append(idxHdr, list);
+      body.appendChild(section);
+    }
+
+    card.appendChild(body);
     makeDraggable(card, hdr);
     canvas.appendChild(card);
   });
@@ -489,7 +875,10 @@ function render() {
 }
 
 render();
+updateSearchCount();
+
 window.addEventListener('resize', () => requestAnimationFrame(drawLines));
+
 document.getElementById('canvas').addEventListener('pointerdown', e => {
   if (e.target === document.getElementById('canvas')) {
     selected = null;
@@ -498,71 +887,53 @@ document.getElementById('canvas').addEventListener('pointerdown', e => {
   }
 });
 
-// ── Zoom ────────────────────────────────────────────────
+// ── Zoom ──────────────────────────────────────────────────
 function setZoom(level) {
   zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(level * 100) / 100));
   const canvas = document.getElementById('canvas');
   const svg    = document.getElementById('lines');
-  canvas.style.transform = `scale(${zoomLevel})`;
-  svg.style.transform    = `scale(${zoomLevel})`;
+  canvas.style.transform  = `scale(${zoomLevel})`;
+  svg.style.transform     = `scale(${zoomLevel})`;
   svg.style.transformOrigin = '0 0';
   document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
   requestAnimationFrame(drawLines);
 }
 
-document.getElementById('zoom-in').addEventListener('click',  () => setZoom(zoomLevel + ZOOM_STEP));
-document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoomLevel - ZOOM_STEP));
+document.getElementById('zoom-in').addEventListener('click',    () => setZoom(zoomLevel + ZOOM_STEP));
+document.getElementById('zoom-out').addEventListener('click',   () => setZoom(zoomLevel - ZOOM_STEP));
 document.getElementById('zoom-reset').addEventListener('click', () => setZoom(1));
 
-// Ctrl + scroll wheel zoom
 window.addEventListener('wheel', e => {
-  if (e.ctrlKey || e.metaKey) {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-    setZoom(zoomLevel + delta);
-  }
+  if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoomLevel + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP)); }
 }, { passive: false });
 
-// Keyboard shortcuts: Ctrl += (zoom in), Ctrl+- (zoom out), Ctrl+0 (reset)
+// ── Keyboard ──────────────────────────────────────────────
 window.addEventListener('keydown', e => {
-  if (!(e.ctrlKey || e.metaKey)) return;
-  if (e.key === '=' || e.key === '+') { e.preventDefault(); setZoom(zoomLevel + ZOOM_STEP); }
-  if (e.key === '-')                  { e.preventDefault(); setZoom(zoomLevel - ZOOM_STEP); }
-  if (e.key === '0')                  { e.preventDefault(); setZoom(1); }
+  const inp = document.getElementById('search-input');
+  const inSearch = searchOpen && document.activeElement === inp;
+
+  if (e.key === 'Escape') {
+    if (searchOpen) { e.preventDefault(); closeSearch(); return; }
+    if (selected)   { selected = null; updateHighlight(); requestAnimationFrame(drawLines); return; }
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); return; }
+
+  // '/' opens search only when not typing elsewhere
+  if (e.key === '/' && !searchOpen && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault(); openSearch(); return;
+  }
+
+  if (inSearch) return; // don't intercept zoom when search input is focused
+
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); setZoom(zoomLevel + ZOOM_STEP); }
+    if (e.key === '-')                  { e.preventDefault(); setZoom(zoomLevel - ZOOM_STEP); }
+    if (e.key === '0')                  { e.preventDefault(); setZoom(1); }
+  }
 });
 
-// Auto-monitoring system
-let activeDataHash = JSON.stringify(DATA);
-
-async function checkUpdates() {
-  try {
-    const res = await fetch(window.location.pathname + '?format=json', {
-      headers: { 'Accept': 'application/json' }
-    });
-    if (!res.ok) return;
-    const json = await res.json();
-    const newHash = JSON.stringify(json);
-    if (newHash !== activeDataHash) {
-      DATA.tables = json.tables || [];
-      DATA.relations = json.relations || [];
-      activeDataHash = newHash;
-
-      if (selected && !DATA.tables.some(t => t.name === selected)) {
-        selected = null;
-      }
-
-      render();
-      updateHighlight();
-    }
-  } catch (e) {
-    console.error('Error auto-updating schema:', e);
-  }
-}
-
-// Check every 1.5 seconds
-setInterval(checkUpdates, 1500);
-
-// ── Theme toggle ─────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────
 document.getElementById('theme-toggle').addEventListener('click', () => {
   const cur  = document.documentElement.style.colorScheme;
   const next = cur === 'light' ? 'dark' : 'light';
@@ -570,6 +941,33 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   localStorage.setItem('watcher_theme', next);
   requestAnimationFrame(drawLines);
 });
+
+// ── Auto-update ───────────────────────────────────────────
+let activeDataHash = JSON.stringify(DATA);
+
+async function checkUpdates() {
+  try {
+    const res = await fetch(window.location.pathname + '?format=json', {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!res.ok) return;
+    const json = await res.json();
+    const newHash = JSON.stringify(json);
+    if (newHash === activeDataHash) return;
+    DATA.tables    = json.tables    || [];
+    DATA.relations = json.relations || [];
+    activeDataHash = newHash;
+    if (selected && !DATA.tables.some(t => t.name === selected)) selected = null;
+    render();
+    updateHighlight();
+    updateSearchCount();
+    if (searchOpen) filterTables(document.getElementById('search-input').value);
+  } catch (e) {
+    console.error('schema update error:', e);
+  }
+}
+
+setInterval(checkUpdates, 1500);
 </script>
 </body>
 </html>

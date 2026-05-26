@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/esrid/watcher/internal/schema/model"
 	"github.com/esrid/watcher/internal/schema/mysql"
 	"github.com/esrid/watcher/internal/schema/postgres"
 	"github.com/esrid/watcher/internal/schema/sqlite"
@@ -20,6 +21,12 @@ import (
 
 //go:embed ui.html
 var uiFS embed.FS
+
+// Index describes one database index on a table.
+type Index = model.Index
+
+// ColumnMeta extends raw column data with constraint information.
+type ColumnMeta = model.ColumnMeta
 
 // Inspector defines the contract for database schema introspection.
 // Implementations query database metadata catalog schemas to extract table
@@ -31,6 +38,10 @@ type Inspector interface {
 	Columns(ctx context.Context, tableName string) ([]string, error)
 	// Relations returns foreign-key descriptors for a table in "fromCol -> targetTable.targetCol" format.
 	Relations(ctx context.Context, tableName string) ([]string, error)
+	// Indexes returns a list of all indexes defined on a table (except primary keys).
+	Indexes(ctx context.Context, tableName string) ([]Index, error)
+	// ColumnMeta returns column descriptors with extra constraints.
+	ColumnMeta(ctx context.Context, tableName string) ([]ColumnMeta, error)
 }
 
 // NewInspector automatically detects the driver type of the provided *sql.DB connection
@@ -138,17 +149,17 @@ func normalizeType(t string) string {
 	return t
 }
 
-// JSON-serializable types for the template payload.
-type jsonCol struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	PK   bool   `json:"pk"`
-	FK   bool   `json:"fk"`
+type jsonIndex struct {
+	Name    string   `json:"name"`
+	Unique  bool     `json:"unique"`
+	Columns []string `json:"columns"`
+	Partial bool     `json:"partial"`
 }
 
 type jsonTable struct {
-	Name string    `json:"name"`
-	Cols []jsonCol `json:"cols"`
+	Name    string       `json:"name"`
+	Cols    []ColumnMeta `json:"cols"`
+	Indexes []jsonIndex  `json:"indexes"`
 }
 
 type jsonRel struct {
@@ -200,21 +211,28 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 
 		var tbls []jsonTable
 		for _, t := range tables {
-			rawCols, _ := inspector.Columns(ctx, t)
-			cols := make([]jsonCol, 0, len(rawCols))
-			for _, c := range rawCols {
-				p := strings.Split(c, "|")
-				if len(p) != 3 {
-					continue
-				}
-				cols = append(cols, jsonCol{
-					Name: p[0],
-					Type: normalizeType(p[1]),
-					PK:   p[2] == "1",
-					FK:   fkIndex[t][p[0]],
-				})
+			cols, _ := inspector.ColumnMeta(ctx, t)
+			for idx := range cols {
+				cols[idx].Type = normalizeType(cols[idx].Type)
+				cols[idx].FK = fkIndex[t][cols[idx].Name]
 			}
-			tbls = append(tbls, jsonTable{Name: t, Cols: cols})
+
+			idxs, _ := inspector.Indexes(ctx, t)
+			jsonIdxs := make([]jsonIndex, len(idxs))
+			for idx, item := range idxs {
+				jsonIdxs[idx] = jsonIndex{
+					Name:    item.Name,
+					Unique:  item.Unique,
+					Columns: item.Columns,
+					Partial: item.Partial,
+				}
+			}
+
+			tbls = append(tbls, jsonTable{
+				Name:    t,
+				Cols:    cols,
+				Indexes: jsonIdxs,
+			})
 		}
 
 		payload := struct {
@@ -238,5 +256,40 @@ func HTTPHandler(inspector Inspector) http.HandlerFunc {
 		if err := tmpl.Execute(w, struct{ JSON template.JS }{JSON: template.JS(b)}); err != nil {
 			http.Error(w, "erreur rendu HTML", http.StatusInternalServerError)
 		}
+	}
+}
+
+// ChangesHandler serves schema diffs.
+//
+// GET  → returns the latest SchemaDiff as JSON (empty diff if < 2 snapshots).
+// POST → takes a new snapshot, then returns the resulting SchemaDiff as JSON.
+func ChangesHandler(d *Differ) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == http.MethodPost {
+			if _, err := d.Snapshot(r.Context()); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = fmt.Fprintf(w, `{"error": %q}`, err.Error())
+				return
+			}
+		} else if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		diffRes, ok := d.Diff()
+		if !ok {
+			_, _ = w.Write([]byte(`{}`))
+			return
+		}
+
+		b, err := json.Marshal(diffRes)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error": "erreur sérialisation"}`))
+			return
+		}
+		_, _ = w.Write(b)
 	}
 }
